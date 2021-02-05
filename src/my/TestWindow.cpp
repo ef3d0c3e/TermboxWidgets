@@ -93,7 +93,6 @@ MyWindow::MyWindow(Window* parent) : Window::Window(TBString{U"Fenêtre test ave
 
 	AddKeyboardInput({U"q", [](Termbox& tb){ tb.GetContext().stop = true; }});
 
-	/*
 	AddEvent({[this](const TimedEvent& ev, Widget& w, Termbox& tb)
 	{
 		static Vec2i dir(3,1);
@@ -106,10 +105,12 @@ MyWindow::MyWindow(Window* parent) : Window::Window(TBString{U"Fenêtre test ave
 		if (GetPosition()[1]+GetSize()[1] >= Termbox::GetDim()[1])
 			dir[1] = -1;
 		SetPosition(GetPosition()+dir);
-		tb.Clear();
-		tb.ForceDraw();
+
+		Invalidate();
+		tb.GetContext().clear = true;
+		tb.ReDraw();
 		tb.Display();
-	}, 16, 1000}, true);*/
+	}, 0, 60}, true);
 	/*
 	AddEvent({[this](const TimedEvent& ev, Widget& w, Termbox& tb)
 	{

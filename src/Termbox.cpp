@@ -180,6 +180,9 @@ void Termbox::RenderLoop()
 {
 	while (!m_ctx.stop && tb_poll_event(&m_ctx.ev) != -1)
 	{
+		if (m_ctx.lock)
+			continue;
+
 		ProcessEvent();
 
 		ReDraw();

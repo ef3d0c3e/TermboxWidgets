@@ -151,3 +151,8 @@ void Window::ReDraw(Widget* widget) const
 	widget->Draw();
 	widget->SetPosition(wPos);
 }
+
+void Window::Invalidate()
+{
+	m_invalidate = true;
+}

@@ -112,6 +112,8 @@ void TimedManager::StartEvents(Widget& w)
 			std::unique_lock<decltype(m_mtx)> l(m_mtx);
 			m_cv.wait_for(l, std::chrono::microseconds(m_resolution));
 
+			Termbox::GetTermbox().GetContext().lock = true;
+
 			for (Event& ev : m_timed)
 			{
 				if (!ev.active)
@@ -120,6 +122,8 @@ void TimedManager::StartEvents(Widget& w)
 				ev.event.RunEvent(m_lastEpoch, w, Termbox::GetTermbox());
 			}
 			m_lastEpoch = std::chrono::duration_cast<std::chrono::microseconds>(m_clock.now().time_since_epoch());
+
+			Termbox::GetTermbox().GetContext().lock = false;
 		}
 	});
 }

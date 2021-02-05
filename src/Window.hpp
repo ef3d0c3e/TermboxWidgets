@@ -79,6 +79,11 @@ public:
 	/// \param widget The widget
 	////////////////////////////////////////////////
 	void ReDraw(Widget* widget) const;
+
+	////////////////////////////////////////////////
+	/// \brief Invalidate the window, marking it for complete redrawing
+	////////////////////////////////////////////////
+	void Invalidate();
 };
 
 #endif // TERMBOXWIDGETS_WINDOW_HPP

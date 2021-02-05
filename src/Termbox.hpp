@@ -48,6 +48,7 @@ class Termbox
 		std::size_t repeat = 0;
 		bool hasRepeat = false;
 		tb_event ev;
+		bool lock = false;
 	} m_ctx;
 
 	static inline Termbox* m_this;
