@@ -1,0 +1,17 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+PROJECT("termbox-widgets")
+
+SET(CMAKE_CXX_FLAGS "-std=c++2a -O3 -Wpedantic -Wall -fopenmp")
+SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+ADD_COMPILE_DEFINITIONS(WITH_TRUECOLOR)
+
+FILE(GLOB SOURCES
+	"src/*.cpp"
+	"src/*.tpp"
+	"src/my/*.cpp"
+	"src/my/*.tpp"
+)
+
+ADD_EXECUTABLE(${CMAKE_PROJECT_NAME} ${SOURCES})
+ADD_SUBDIRECTORY("src/termbox")
+TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME} libtermbox-static)
