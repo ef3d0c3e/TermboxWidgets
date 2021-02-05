@@ -161,7 +161,7 @@ String ToString(T x, std::function<Char(T)> charFn = [](T d)
 		});
 }
 /** @cond */
-#include "Util.tpp"
+#include "Util.tcc"
 /** @endcond */
 
 #endif // TERMBOX_WIDGETS_UTIL_HPP

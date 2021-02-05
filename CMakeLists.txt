@@ -7,9 +7,9 @@ ADD_COMPILE_DEFINITIONS(WITH_TRUECOLOR)
 
 FILE(GLOB SOURCES
 	"src/*.cpp"
-	"src/*.tpp"
+	"src/*.tcc"
 	"src/my/*.cpp"
-	"src/my/*.tpp"
+	"src/my/*.tcc"
 )
 
 ADD_EXECUTABLE(${CMAKE_PROJECT_NAME} ${SOURCES})

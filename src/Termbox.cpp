@@ -178,6 +178,9 @@ void Termbox::ProcessEvent()
 
 void Termbox::RenderLoop()
 {
+	static std::mutex mtx;
+	static std::condition_variable cv;
+	static std::unique_lock<std::mutex> l(mtx);
 	while (!m_ctx.stop && tb_poll_event(&m_ctx.ev) != -1)
 	{
 		if (m_ctx.lock)

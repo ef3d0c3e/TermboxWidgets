@@ -84,6 +84,8 @@ MyWindow::MyWindow(Window* parent) : Window::Window(TBString{U"Fenêtre test ave
 		ReDraw(line);
 	});
 
+	
+
 
 
 	//TODO: '0 G'
@@ -110,7 +112,32 @@ MyWindow::MyWindow(Window* parent) : Window::Window(TBString{U"Fenêtre test ave
 		tb.GetContext().clear = true;
 		tb.ReDraw();
 		tb.Display();
-	}, 0, 60}, true);
+		//TODO: HI: pause this and events will be lost...
+	}, 0, 600}, true);
+
+/*
+← ↖ ↑ ↗ → ↘ ↓ ↙
+
+▁ ▂ ▃ ▄ ▅ ▆ ▇ █ ▇ ▆ ▅ ▄ ▃ ▁
+
+▉▊▋▌▍▎▏▎▍▌▋▊▉
+
+▖ ▘ ▝ ▗
+
+┤ ┘ ┴ └ ├ ┌ ┬ ┐
+
+◢ ◣ ◤ ◥
+
+◰ ◳ ◲ ◱
+
+◴ ◷ ◶ ◵
+
+◐ ◓ ◑ ◒
+
+◡◡ ⊙⊙ ◠◠
+
+⣾⣽⣻⢿⡿⣟⣯⣷ ⠁⠂⠄⡀⢀⠠⠐⠈
+*/
 	/*
 	AddEvent({[this](const TimedEvent& ev, Widget& w, Termbox& tb)
 	{
