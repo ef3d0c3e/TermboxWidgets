@@ -1,26 +1,14 @@
-#include "my/TestWindow.hpp"
-#include "tests.hpp"
-#include <unistd.h>
-#include <chrono>
+#include "Termbox.hpp"
 
 int main()
 {
-	std::setlocale(LC_ALL, "en_US.UTF-8");
-
-	//if (!TestAll())
-	//	return EXIT_FAILURE;
-
-	//std::cout << "FIT:" << std::boolalpha << my.CheckAllWidgets() << "\n";
+	std::setlocale(LC_ALL, "en-US.UTF-8");
 
 	try
 	{
-		Termbox tb(Color::COLORS_TRUECOLOR, 0xF0F000);
-		MyWindow my;
-		tb.AddWidget(&my);
-
-		tb.Clear();
-		tb.ReDraw();
-		tb.Display();
+		Termbox tb(Color::COLORS_TRUECOLOR, COLOR_DEFAULT);
+		//MainWindow win("~/Programming/index/src");
+		//tb.AddWidget(&win);
 
 		tb.RenderLoop();
 	}

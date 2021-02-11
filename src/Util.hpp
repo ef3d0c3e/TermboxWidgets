@@ -159,6 +159,24 @@ String ToString(T x, std::function<Char(T)> charFn = [](T d)
 				c = 'A'+(d-10);
 			return c;
 		});
+
+template <class T, class T1, std::size_t N1, class T2, std::size_t N2>
+constexpr std::array<T, N1 + N2> concat(std::array<T1, N1> lhs, std::array<T2, N2> rhs)
+{
+	std::array<T, N1 + N2> result{};
+	std::size_t i = 0;
+	
+	for (auto& el : lhs) {
+		result[i] = std::move(el);
+		++i;
+	}
+	for (auto& el : rhs) {
+		result[i] = std::move(el);
+		++i;
+	}
+	
+	return result;
+}
 }
 /** @cond */
 #include "Util.tcc"

@@ -4,12 +4,12 @@
 // Will return true if at least one event has been processed
 bool Window::ProcessKeyboardEvent(Termbox& tb)
 {
-	for (auto it : m_widgets)
+	for (auto& it : m_widgets)
 	{
-		if (it.second->IsActive())
-			it.first = it.second->ProcessKeyboardEvent(tb);
+		if (it.first->IsActive())
+			it.second = it.first->ProcessKeyboardEvent(tb);
 
-		if (it.first)
+		if (it.second)
 			return true;
 	}
 
@@ -18,12 +18,12 @@ bool Window::ProcessKeyboardEvent(Termbox& tb)
 
 bool Window::ProcessMouseEvent(Termbox& tb, const Widget& w)
 {
-	for (auto it : m_widgets)
+	for (auto& it : m_widgets)
 	{
-		if (it.second->IsActive())
-			it.first = it.second->ProcessMouseEvent(tb, *it.second);
+		if (it.first->IsActive())
+			it.second = it.first->ProcessMouseEvent(tb, *it.first);
 
-		if (it.first)
+		if (it.second)
 			return true;
 	}
 
@@ -39,9 +39,8 @@ void Window::Draw()
 		m_ipos = rect.first;
 		m_isize = rect.second;
 
-
 		// Title
-		if (BorderItem::GetBorderFlags() & Draw::BorderFlag::Top)
+		if (m_windowName.Size() != 0 && BorderItem::GetBorderFlags() & Draw::BorderFlag::Top)
 		{
 			const auto p = Draw::TextLine(m_windowName, GetPosition() + Vec2i(1, 0), GetSize()[0] - 1, { Settings::trailing_character, Settings::default_window_name_style }).first;
 			Draw::Horizontal(BorderItem::GetBorder()[4], GetPosition() + Vec2i(1 + p, 0), GetSize()[0] - 1 - p);
@@ -52,29 +51,60 @@ void Window::Draw()
 	}
 
 	// Widgets
-	for (auto it : m_widgets)
+	for (auto& it : m_widgets)
 	{
-		if (!m_invalidate && !it.first)
+		if (!it.first->IsVisible())
+			continue;
+		if (!m_invalidate && !it.second)
 			continue;
 
-		auto wPos = it.second->GetPosition();
-		it.second->SetPosition(wPos + m_ipos);
-		it.second->Draw();
-		it.second->SetPosition(wPos);
-		it.first = false;
+		auto wPos = it.first->GetPosition();
+		it.first->SetPosition(wPos + m_ipos);
+		it.first->Draw();
+		it.first->SetPosition(wPos);
+		it.second = false;
 	}
 
-	if (m_invalidate) [[unlikely]]
-		m_invalidate = false;
+	m_invalidate = false;
 }
 
 void Window::Resize(Vec2i dim)
 {
 }
 
-void Window::AddWidget(Widget* widget)
+std::size_t Window::AddWidget(Widget* widget)
 {
-	m_widgets.push_back(std::make_pair(true, widget));
+	m_widgets.push_back({ widget, true });
+	return m_widgets.size()-1;
+}
+
+Widget* Window::RemoveWidget(std::size_t id)
+{
+	if (id < m_widgets.size())
+	{
+		Widget* w = m_widgets[id].first;
+		m_widgets.erase(m_widgets.begin()+id);
+		return w;
+	}
+
+	return nullptr;
+}
+
+Widget* Window::GetWidget(std::size_t id)
+{
+	if (id < m_widgets.size())
+		return m_widgets[id].first;
+
+	return nullptr;
+}
+
+bool Window::SetWidgetExpired(std::size_t id, bool expired)
+{
+	if (id >= m_widgets.size())
+		return false;
+
+	m_widgets[id].second = expired;
+	return true;
 }
 
 Window::Window(const TBString& windowName, Window* parent):
@@ -91,8 +121,8 @@ Window::Window(const TBString& windowName, Window* parent):
 
 Window::~Window()
 {
-	for (auto widget : m_widgets)
-		delete widget.second;
+	for (auto& widget : m_widgets)
+		delete widget.first;
 }
 
 void Window::SetName(const TBString& name)
@@ -130,9 +160,9 @@ const TBChar& Window::GetBackground() const
 
 bool Window::CheckAllWidgets() const
 {
-	for (auto widget : m_widgets)
+	for (auto& widget : m_widgets)
 	{
-		if (!widget.second->IsCorrect())
+		if (!widget.first->IsCorrect())
 			return false;
 	}
 

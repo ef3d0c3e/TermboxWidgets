@@ -4,17 +4,17 @@
 #include <map>
 
 // {{{ Mouse
-Mouse::Mouse(Type type, std::function<void(Termbox&, const Vec2i&)> callback)
+Mouse::Mouse(Type type, decltype(m_callback) callback)
 {
 	m_callback = callback;
-	m_dim = m_pos = { 0, 0 };
+	m_szOffset = m_posOffset = { 0, 0 };
 	m_type = type;
 }
 
-Mouse::Mouse(const std::pair<Vec2i, Vec2i>& area, Type type, std::function<void(Termbox&, const Vec2i&)> callback)
+Mouse::Mouse(const std::pair<Vec2i, Vec2i>& offset, Type type, decltype(m_callback) callback)
 {
 	m_callback = callback;
-	SetArea(area);
+	SetOffset(offset);
 	m_type = Type::MOUSE_LEFT;
 	m_type = type;
 }
@@ -23,15 +23,10 @@ Mouse::~Mouse()
 {
 }
 
-bool Mouse::operator==(const Mouse& m) const
+void Mouse::SetOffset(const std::pair<Vec2i, Vec2i>& offset)
 {
-	return m_pos == m.m_pos && m_dim == m.m_dim && m_type == m.m_type;
-}
-
-void Mouse::SetArea(const std::pair<Vec2i, Vec2i>& area)
-{
-	m_pos = area.first;
-	m_dim = area.second;
+	m_posOffset = offset.first;
+	m_szOffset = offset.second;
 }
 
 bool Mouse::Match(Termbox& tb, const Widget& w) const
@@ -40,13 +35,15 @@ bool Mouse::Match(Termbox& tb, const Widget& w) const
 	if (ev.key != m_type)
 		return false;
 
-	const Vec2i temp = m_pos + w.GetPosition();
-	Vec2i pos(static_cast<int>(ev.x), static_cast<int>(ev.y));
+	const Vec2i pos(static_cast<int>(ev.x), static_cast<int>(ev.y));
+	const Vec2i wpos = m_posOffset + w.GetPosition();
+	const Vec2i wdim = w.GetSize()+m_szOffset;
 
-	if ((pos[0] >= w.GetPosition()[0] + temp[0] && pos[0] <= w.GetPosition()[0] + temp[0] + m_dim[0]) &&
-		(pos[1] >= w.GetPosition()[1] + temp[1] && pos[1] <= w.GetPosition()[1] + temp[1] + m_dim[1]))
+
+	if ((pos[0] >= wpos[0] && pos[0] <= wpos[0] + wdim[0]) &&
+		(pos[1] >= wpos[1] && pos[1] <= wpos[1] + wdim[1]))
 	{
-		m_callback(tb, pos);
+		m_callback(pos);
 		return true;
 	}
 
@@ -260,7 +257,7 @@ String Key::GetKeyName() const
 // }}}
 
 // {{{ KeyComb
-KeyComb::KeyComb(std::function<void(Termbox&)> callback)
+KeyComb::KeyComb(decltype(m_callback) callback)
 {
 	m_keys = nullptr;
 	m_keys_num = 0;
@@ -268,7 +265,7 @@ KeyComb::KeyComb(std::function<void(Termbox&)> callback)
 	m_matchState = false;
 }
 
-KeyComb::KeyComb(const String& s, std::function<void(Termbox&)> callback)
+KeyComb::KeyComb(const String& s, decltype(m_callback) callback)
 {
 	m_keys = nullptr;
 	m_keys_num = 0;
@@ -508,7 +505,7 @@ bool KeyComb::Match(Termbox& tb)
 	if (m_matchState == Size())
 	{
 		m_matchState = 0;
-		m_callback(tb);
+		m_callback();
 		return true;
 	}
 

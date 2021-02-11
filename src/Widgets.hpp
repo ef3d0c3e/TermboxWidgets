@@ -80,7 +80,7 @@ public:
 ////////////////////////////////////////////////
 /// \brief Abstract class for a widget
 ////////////////////////////////////////////////
-class Widget : public Drawable, public KeyboardInput, public MouseInput, public TimedManager
+class Widget : public Drawable, public KeyboardInput, public MouseInput, public TimedManager, public Resizeable
 {
 	Window* m_parent;
 	bool m_visible;
@@ -168,6 +168,8 @@ public:
 	/// \returns True if the widget is processing timed events
 	////////////////////////////////////////////////
 	bool IsProcessingTimed() const;
+
+	void Resize(Vec2i dim) { }
 };
 // }}}
 
@@ -372,7 +374,6 @@ struct ListSelectSettings
 
 	Char TrailingChar = U'~';
 
-
 	bool Cycling = true;
 };
 
@@ -388,9 +389,9 @@ struct ListSelectSettings
 template <ListSelectSettings Settings, class Entry>
 class ListSelect : public Widget
 {
-	std::function<std::pair<int, TBStyle>(std::size_t, const std::vector<String>&, Vec2i, int, bool, bool, Char)> m_drawEntryFn;
+	std::function<std::pair<TBStyle, TBStyle>(std::size_t, Vec2i, int, bool, bool, Char)> m_drawEntryFn;
 
-	std::vector<Entry> m_entries;
+	std::size_t m_entries;
 
 	std::vector<std::size_t> m_marked;
 	std::size_t m_position;
@@ -398,6 +399,7 @@ class ListSelect : public Widget
 
 	TBChar m_bg;
 
+public:
 	// {{{ Draw
 	virtual void Draw()
 	{
@@ -416,7 +418,7 @@ class ListSelect : public Widget
 
 		for (int y = 0; y < GetSize()[1]; ++y)
 		{
-			if (m_offset+static_cast<std::size_t>(y) >= m_entries.size())
+			if (m_offset+static_cast<std::size_t>(y) >= m_entries)
 			{
 				Draw::Horizontal(m_bg, GetPosition()+Vec2i(0, y), GetSize()[0]);
 				continue;
@@ -428,8 +430,7 @@ class ListSelect : public Widget
 				left += Settings.NumberSpacing + numberWidth;
 			}
 
-			const auto&& [w, style] = m_drawEntryFn(m_offset+static_cast<std::size_t>(y),
-					m_entries,
+			const auto&& [s1, s2] = m_drawEntryFn(m_offset+static_cast<std::size_t>(y),
 					GetPosition()+Vec2i(left, y),
 					GetSize()[0]-left-Settings.RightMargin,
 					m_offset+static_cast<std::size_t>(y) == m_position,
@@ -460,30 +461,30 @@ class ListSelect : public Widget
 
 				if constexpr (Settings.NumberRightAlign)
 				{
-					const auto p = Draw::TextLine(s, style, GetPosition()+Vec2i(Settings.LeftMargin+numberWidth-static_cast<int>(s.size()), y), s.size(), {Settings.TrailingChar, style}).first;
-					Draw::Horizontal({m_bg.ch, style}, GetPosition()+Vec2i(Settings.LeftMargin, y), numberWidth-p);
+					const auto p = Draw::TextLine(s, s2, GetPosition()+Vec2i(Settings.LeftMargin+numberWidth-static_cast<int>(s.size()), y), s.size(), {Settings.TrailingChar, s2}).first;
+					Draw::Horizontal({m_bg.ch, s2}, GetPosition()+Vec2i(Settings.LeftMargin, y), numberWidth-p);
 				}
 				else
 				{
-					const auto p = Draw::TextLine(s, style, GetPosition()+Vec2i(Settings.LeftMargin, y), numberWidth, {Settings.TrailingChar, style}).first;
-					Draw::Horizontal({m_bg.ch, style}, GetPosition()+Vec2i(Settings.LeftMargin+p, y), numberWidth-p);
+					const auto p = Draw::TextLine(s, s2, GetPosition()+Vec2i(Settings.LeftMargin, y), numberWidth, {Settings.TrailingChar, s2}).first;
+					Draw::Horizontal({m_bg.ch, s2}, GetPosition()+Vec2i(Settings.LeftMargin+p, y), numberWidth-p);
 				}
 			}
 
-			Draw::Horizontal({m_bg.ch, style}, GetPosition()+Vec2i(0, y), Settings.LeftMargin);
-			Draw::Horizontal({m_bg.ch, style}, GetPosition()+Vec2i(Settings.LeftMargin+numberWidth, y), Settings.NumberSpacing);
-			Draw::Horizontal({m_bg.ch, style}, GetPosition()+Vec2i(GetSize()[0]-Settings.RightMargin, y), Settings.RightMargin);
+			Draw::Horizontal({m_bg.ch, s1}, GetPosition()+Vec2i(0, y), Settings.LeftMargin);
+			Draw::Horizontal({m_bg.ch, s1}, GetPosition()+Vec2i(Settings.LeftMargin+numberWidth, y), Settings.NumberSpacing);
+			Draw::Horizontal({m_bg.ch, s1}, GetPosition()+Vec2i(GetSize()[0]-Settings.RightMargin, y), Settings.RightMargin);
 		}
 	}
 	// }}}
-public:
-	// {{{ Actions
-	EventListener<Termbox&> OnChangePosition;
-	void ActionDown(Termbox &tb)
-	{
-		OnChangePosition.Notify<EventWhen::BEFORE>(tb);
 
-		if (m_position == m_entries.size()-1) [[unlikely]]
+	// {{{ Actions
+	EventListener<> OnChangePosition;
+	void ActionDown()
+	{
+		OnChangePosition.Notify<EventWhen::BEFORE>();
+
+		if (m_position == m_entries-1) [[unlikely]]
 		{
 			if constexpr (Settings.Cycling)
 			{
@@ -496,36 +497,36 @@ public:
 		++m_position;
 		const int trigger = GetSize()[1] * (100-Settings.ScrollTriggerDown) / 100;
 		if (m_position-m_offset >= static_cast<std::size_t>(trigger)
-			&& m_offset+GetSize()[1] < m_entries.size())
+			&& m_offset+GetSize()[1] < m_entries)
 			++m_offset;
 
-		OnChangePosition.Notify<EventWhen::AFTER>(tb);
+		OnChangePosition.Notify<EventWhen::AFTER>();
 	}
 
-	void ActionDownN(Termbox& tb, std::size_t N)
+	void ActionDownN(std::size_t N)
 	{
-		OnChangePosition.Notify<EventWhen::BEFORE>(tb);
+		OnChangePosition.Notify<EventWhen::BEFORE>();
 
-		m_position = std::min(m_entries.size()-1, m_position+N);
+		m_position = std::min(m_entries-1, m_position+N);
 
 		const int trigger = GetSize()[1] * (100-Settings.ScrollTriggerDown) / 100;
 		if (m_position - m_offset >= static_cast<std::size_t>(trigger)
-			&& m_offset+GetSize()[1] < m_entries.size())
-				m_offset = std::min(m_entries.size()-GetSize()[1], m_offset + m_position +1 - trigger);
+			&& m_offset+GetSize()[1] < m_entries)
+				m_offset = std::min(m_entries-GetSize()[1], m_offset + m_position +1 - trigger);
 
-		OnChangePosition.Notify<EventWhen::AFTER>(tb);
+		OnChangePosition.Notify<EventWhen::AFTER>();
 	}
 
-	void ActionUp(Termbox &tb)
+	void ActionUp()
 	{
-		OnChangePosition.Notify<EventWhen::BEFORE>(tb);
+		OnChangePosition.Notify<EventWhen::BEFORE>();
 
 		if (m_position == 0) [[unlikely]]
 		{
 			if constexpr (Settings.Cycling)
 			{
-				m_position = m_entries.size()-1;
-				if (m_entries.size() < static_cast<std::size_t>(GetSize()[1]))
+				m_position = m_entries-1;
+				if (m_entries < static_cast<std::size_t>(GetSize()[1]))
 					m_offset = 0;
 				else
 					m_offset = m_position-GetSize()[1]+1;
@@ -540,12 +541,12 @@ public:
 			&& m_offset != 0)
 				m_offset = m_position >= trigger ? m_position - trigger : 0;
 
-		OnChangePosition.Notify<EventWhen::AFTER>(tb);
+		OnChangePosition.Notify<EventWhen::AFTER>();
 	}
 
-	void ActionUpN(Termbox &tb, std::size_t N)
+	void ActionUpN(std::size_t N)
 	{
-		OnChangePosition.Notify<EventWhen::BEFORE>(tb);
+		OnChangePosition.Notify<EventWhen::BEFORE>();
 
 		m_position = m_position-std::min(m_position, N);
 
@@ -554,14 +555,19 @@ public:
 			&& m_offset != 0)
 				m_offset = m_position >= trigger ? m_position - trigger : 0;
 
-		OnChangePosition.Notify<EventWhen::AFTER>(tb);
+		OnChangePosition.Notify<EventWhen::AFTER>();
 	}
 
-	void ActionSetPosition(Termbox& tb, std::size_t pos)
+	void ActionSetPosition(std::size_t pos)
 	{
-		OnChangePosition.Notify<EventWhen::BEFORE>(tb);
+		OnChangePosition.Notify<EventWhen::BEFORE>();
 
-		if (pos <= m_position)
+		if (m_entries <= static_cast<std::size_t>(GetSize()[1]))
+		{
+			m_offset = 0;
+			m_position = pos;
+		}
+		else if (pos <= m_position)
 		{
 			m_position = pos;
 
@@ -572,20 +578,26 @@ public:
 		}
 		else
 		{
-			m_position = std::min(m_entries.size()-1, pos);
+			m_position = std::min(m_entries-1, pos);
 
 			const int trigger = GetSize()[1] * (100-Settings.ScrollTriggerDown) / 100;
 			if (m_position - m_offset >= static_cast<std::size_t>(trigger)
-				&& m_offset+GetSize()[1] < m_entries.size())
-					m_offset = std::min(m_entries.size()-GetSize()[1], m_offset + m_position +1 - trigger);
+				&& m_offset+GetSize()[1] < m_entries)
+					m_offset = std::min(m_entries-GetSize()[1], m_offset + m_position +1 - trigger);
 		}
 
-		OnChangePosition.Notify<EventWhen::AFTER>(tb);
+		OnChangePosition.Notify<EventWhen::AFTER>();
+	}
+
+	void ActionMouseClick(const Vec2i& pos)
+	{
+		ActionSetPosition(m_offset+pos[1]-GetPosition()[1]);
 	}
 	// }}}
 
 	ListSelect(decltype(m_drawEntryFn) drawEntryFn):
 		m_drawEntryFn(drawEntryFn),
+		m_entries(0),
 		m_position(0),
 		m_offset(0),
 		m_bg(U' ', Settings::default_text_style)
@@ -596,52 +608,56 @@ public:
 	{
 		RemoveAllKeyboardInput();
 
-		AddKeyboardInput(KeyComb(U"DOWN", [this](Termbox& tb)
+		AddKeyboardInput(KeyComb(U"DOWN", [this]()
 		{ 
+			Termbox& tb = Termbox::GetTermbox();
 			if (tb.GetContext().repeat == 0) [[likely]]
-				ActionDown(tb);
+				ActionDown();
 			else [[unlikely]]
-				ActionDownN(tb, tb.GetContext().repeat);
+				ActionDownN(tb.GetContext().repeat);
 		}));
-		AddKeyboardInput(KeyComb(U"PGDN", [this](Termbox& tb){ ActionDownN(tb, 10); }));
+		AddKeyboardInput(KeyComb(U"PGDN", [this](){ ActionDownN(10); }));
 		AddMouseInput(Mouse(std::make_pair(Vec2i(0, 0), GetSize()), Mouse::MOUSE_WHEEL_DOWN,
-					[this](Termbox& tb, const Vec2i&){ ActionDownN(tb, 1); }));
-		AddKeyboardInput(KeyComb(U"UP", [this](Termbox& tb)
+					[this](const Vec2i&){ ActionDownN(1); }));
+		AddKeyboardInput(KeyComb(U"UP", [this]()
 		{ 
+			Termbox& tb = Termbox::GetTermbox();
 			if (tb.GetContext().repeat == 0) [[likely]]
-				ActionUp(tb);
+				ActionUp();
 			else [[unlikely]]
-				ActionUpN(tb, tb.GetContext().repeat);
+				ActionUpN(tb.GetContext().repeat);
 		}));
-		AddKeyboardInput(KeyComb(U"PGUP", [this](Termbox& tb){ ActionUpN(tb, 10); }));
+		AddKeyboardInput(KeyComb(U"PGUP", [this](){ ActionUpN(10); }));
 		AddMouseInput(Mouse(std::make_pair(Vec2i(0, 0), GetSize()), Mouse::MOUSE_WHEEL_UP,
-					[this](Termbox& tb, const Vec2i&){ ActionUpN(tb, 1); }));
+					[this](const Vec2i&){ ActionUpN(1); }));
 
-		AddKeyboardInput(KeyComb(U"g g",  [this](Termbox& tb){ ActionSetPosition(tb, 0); }));
-		AddKeyboardInput(KeyComb(U"S-G",  [this](Termbox& tb)
-		{ 
+		AddKeyboardInput(KeyComb(U"g g",  [this](){ ActionSetPosition(0); }));
+		AddKeyboardInput(KeyComb(U"S-G",  [this]()
+		{
+			Termbox& tb = Termbox::GetTermbox();
 			if (tb.GetContext().hasRepeat)
-				ActionSetPosition(tb, tb.GetContext().repeat);
+				ActionSetPosition(tb.GetContext().repeat);
 			else
-				ActionSetPosition(tb, m_entries.size()-1);
+				ActionSetPosition(m_entries-1);
 		}));
 	}
 
 	////////////////////////////////////////////////
 	/// \brief Set the ListSelect's entries
-	/// \param entries The new entries
+	/// \param entries The new number of entries
 	////////////////////////////////////////////////
-	void SetEntries(std::vector<Entry>&& entries)
+	void SetEntries(std::size_t entries)
 	{
-		m_entries = std::forward<std::vector<Entry>>(entries);
+		m_entries = entries;
 	}
 
 	////////////////////////////////////////////////
-	/// \brief Clear the ListSelect's entries
+	/// \brief Get the ListSelect's entries
+	/// \returns The number of entries
 	////////////////////////////////////////////////
-	void RemoveEntries()
+	std::size_t GetEntries() const
 	{
-		m_entries.clear();
+		return m_entries;
 	}
 
 	////////////////////////////////////////////////
@@ -660,10 +676,18 @@ public:
 	{
 		return m_bg;
 	}
+
+	const std::size_t GetPos() const
+	{
+		return m_position;
+	}
+
+	const std::size_t GetOffset() const
+	{
+		return m_offset;
+	}
 };
 // }}}
 }
-
-
 
 #endif // TERMBOXWIDGETS_WIDGETS_HPP

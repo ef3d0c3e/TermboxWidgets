@@ -37,6 +37,12 @@ void Termbox::Resize()
 	tb_clear_buffer();
 	s_dim = { tb_width(), tb_height() };
 	m_ctx.clear = true;
+
+	for (auto& it : m_widgets)
+	{
+		it.first->Resize(s_dim);
+		it.second = false;
+	}
 }
 
 void Termbox::Display()
@@ -85,28 +91,44 @@ void Termbox::SetCursor(Vec2i pos)
 	tb_set_cursor(pos[0], pos[1]);
 }
 
-bool Termbox::AddWidget(Widget* widget)
+std::size_t Termbox::AddWidget(Widget* widget)
 {
+	// Optional check
 	for (const auto& it : m_widgets)
 		if (it.first == widget)
-			return false;
+			return static_cast<std::size_t>(-1);
 
 	m_widgets.push_back({ widget, true });
-	return true;
+	return m_widgets.size()-1;
 }
 
-bool Termbox::RemoveWidget(Widget* widget)
+Widget* Termbox::RemoveWidget(std::size_t id)
 {
-	for (std::size_t i = 0; i < m_widgets.size(); ++i)
+	if (id < m_widgets.size())
 	{
-		if (m_widgets[i].first == widget)
-		{
-			m_widgets.erase(m_widgets.begin() + i);
-			return true;
-		}
+		Widget* w = m_widgets[id].first;
+		m_widgets.erase(m_widgets.begin()+id);
+		return w;
 	}
 
-	return false;
+	return nullptr;
+}
+
+Widget* Termbox::GetWidget(std::size_t id)
+{
+	if (id < m_widgets.size())
+		return m_widgets[id].first;
+
+	return nullptr;
+}
+
+bool Termbox::SetWidgetExpired(std::size_t id, bool expired)
+{
+	if (id >= m_widgets.size())
+		return false;
+
+	m_widgets[id].second = expired;
+	return true;
 }
 
 void Termbox::ReDraw()
@@ -181,6 +203,11 @@ void Termbox::RenderLoop()
 	static std::mutex mtx;
 	static std::condition_variable cv;
 	static std::unique_lock<std::mutex> l(mtx);
+
+	Clear();
+	ReDraw();
+	Display();
+
 	while (!m_ctx.stop && tb_poll_event(&m_ctx.ev) != -1)
 	{
 		if (m_ctx.lock)

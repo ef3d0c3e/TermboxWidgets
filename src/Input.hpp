@@ -11,10 +11,10 @@ class Widget;
 ////////////////////////////////////////////////
 class Mouse
 {
-	Vec2i m_pos;
-	Vec2i m_dim;
+	Vec2i m_posOffset;
+	Vec2i m_szOffset;
 
-	std::function<void(Termbox&, const Vec2i&)> m_callback;
+	std::function<void(const Vec2i&)> m_callback;
 
 public:
 	MAKE_CENUMV_Q(Type, std::uint16_t,
@@ -34,13 +34,13 @@ public:
 	/// \brief Constructor
 	/// \param callback The callback
 	////////////////////////////////////////////////
-	Mouse(Type type, std::function<void(Termbox&, const Vec2i&)> callback);
+	Mouse(Type type, decltype(m_callback) callback);
 	////////////////////////////////////////////////
 	/// \brief Constructor
-	/// \param area The area
+	/// \param offset Offset for the ares (relative to the widget's sizes)
 	/// \param callback The callback
 	////////////////////////////////////////////////
-	Mouse(const std::pair<Vec2i, Vec2i>& area, Type type, std::function<void(Termbox&, const Vec2i&)> callback);
+	Mouse(const std::pair<Vec2i, Vec2i>& offset, Type type, decltype(m_callback) callback);
 
 	////////////////////////////////////////////////
 	/// \brief Destructor
@@ -48,17 +48,10 @@ public:
 	~Mouse();
 
 	////////////////////////////////////////////////
-	/// \brief Comparison
-	/// \param m The mouse event to compare
-	/// \returns `true` if the two events are the same
+	/// \brief Set the offsets
+	/// \param offset The offsets
 	////////////////////////////////////////////////
-	bool operator==(const Mouse& m) const;
-
-	////////////////////////////////////////////////
-	/// \brief Set the area
-	/// \param area The area
-	////////////////////////////////////////////////
-	void SetArea(const std::pair<Vec2i, Vec2i>& area);
+	void SetOffset(const std::pair<Vec2i, Vec2i>& offset);
 
 	////////////////////////////////////////////////
 	/// \brief Will match with the area
@@ -134,7 +127,7 @@ class KeyComb
 {
 	Key* m_keys;
 	std::size_t m_keys_num;
-	std::function<void(Termbox&)> m_callback;
+	std::function<void()> m_callback;
 
 	std::size_t m_matchState;
 
@@ -143,13 +136,13 @@ public:
 	/// \brief Constructor
 	/// \param callback The callback
 	////////////////////////////////////////////////
-	KeyComb(std::function<void(Termbox&)> callback);
+	KeyComb(decltype(m_callback) callback);
 	////////////////////////////////////////////////
 	/// \brief Constructor
 	/// \param s The string for the combination
 	/// \param callback The callback
 	////////////////////////////////////////////////
-	KeyComb(const String& s, std::function<void(Termbox&)> callback);
+	KeyComb(const String& s, decltype(m_callback) callback);
 
 	////////////////////////////////////////////////
 	/// \brief Destructor
@@ -282,16 +275,6 @@ public:
 	void AddMouseInput(const Mouse& m)
 	{
 		m_mouse.push_back(m);
-	}
-
-	////////////////////////////////////////////////
-	/// \brief Remove an input
-	/// \param m The mouse event to remove
-	/// \returns true If an event was removed
-	////////////////////////////////////////////////
-	bool RemoveMouseInput(const Mouse& m)
-	{
-		return std::erase_if(m_mouse, [&](const Mouse& __m){ return m == __m; }) != 0;
 	}
 
 	////////////////////////////////////////////////

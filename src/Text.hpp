@@ -146,7 +146,13 @@ struct TBStyle
 	////////////////////////////////////////////////
 	/// \brief Assign operator
 	////////////////////////////////////////////////
-	TBStyle& operator=(const TBStyle& s);
+	constexpr TBStyle& operator=(const TBStyle& s)
+	{
+		this->fg = s.fg;
+		this->bg = s.bg;
+		this->s = s.s;
+		return *this;
+	}
 };
 
 ////////////////////////////////////////////////

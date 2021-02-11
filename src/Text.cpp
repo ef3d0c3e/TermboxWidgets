@@ -54,14 +54,6 @@ const Color::COLOR_MODE& Color::GetMode()
 	return s_mode;
 }
 
-TBStyle& TBStyle::operator=(const TBStyle& s)
-{
-	this->fg = s.fg;
-	this->bg = s.bg;
-	this->s = s.s;
-	return *this;
-}
-
 TBChar& TBChar::operator=(const TBChar& c)
 {
 	ch = c.ch;

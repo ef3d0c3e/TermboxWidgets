@@ -3,7 +3,7 @@
 
 #include "Widgets.hpp"
 
-class Window : public Widget, public Resizeable, public BorderItem
+class Window : public Widget, public BorderItem
 {
 	////////////////////////////////////////////////
 	/// \brief A class that holds information about
@@ -13,7 +13,7 @@ class Window : public Widget, public Resizeable, public BorderItem
 	TBString m_windowName;
 
 	TBChar m_bg;
-	std::vector<std::pair<bool, Widget*>> m_widgets;
+	std::vector<std::pair<Widget*, bool>> m_widgets;
 	bool m_invalidate;
 
 	Vec2i m_ipos;
@@ -26,7 +26,45 @@ class Window : public Widget, public Resizeable, public BorderItem
 	void Resize(Vec2i dim);
 
 protected:
-	void AddWidget(Widget* widget);
+	////////////////////////////////////////////////
+	/// \brief Add a widget to the widget list
+	///
+	/// \param widget A pointer to the widget to add
+	/// \returns The ID of the widget if it was succesfully added to the list.
+	/// \note O(n) complexity
+	////////////////////////////////////////////////
+	std::size_t AddWidget(Widget* widget);
+
+	////////////////////////////////////////////////
+	/// \brief Remove a widget from the widget list
+	///
+	/// \param id The id of the widget
+	/// \returns The widget's address if it succeeds
+	///          nullptr if the widget was not found
+	/// \note O(n) complexity
+	////////////////////////////////////////////////
+	Widget* RemoveWidget(std::size_t id);
+
+	////////////////////////////////////////////////
+	/// \brief Get a widget from the widget list
+	///
+	/// \param id The id of the widget
+	/// \returns The widget's address if it succeeds
+	///          nullptr if the widget was not found
+	/// \note O(1) complexity
+	////////////////////////////////////////////////
+	Widget* GetWidget(std::size_t id);
+
+	////////////////////////////////////////////////
+	/// \brief Change the redrawing state of a widget
+	///
+	/// \param id The id of the widget
+	/// \param expired The new state of the widget
+	/// \returns True if it succeded
+	///          False if it failed
+	/// \note O(1) complexity
+	////////////////////////////////////////////////
+	bool SetWidgetExpired(std::size_t id, bool expired);
 
 public:
 	////////////////////////////////////////////////

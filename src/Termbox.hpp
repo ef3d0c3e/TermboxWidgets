@@ -146,19 +146,39 @@ public:
 	/// \brief Add a widget to the widget list
 	///
 	/// \param widget A pointer to the widget to add
-	/// \returns True if the widget was succesfully added to the list.
-	///          False if the widget was already in the list.
+	/// \returns The ID of the widget if it was succesfully added to the list.
+	///          std::size_t(-1) if insertion failed
 	////////////////////////////////////////////////
-	bool AddWidget(Widget* widget);
+	std::size_t AddWidget(Widget* widget);
 
 	////////////////////////////////////////////////
 	/// \brief Remove a widget from the widget list
 	///
-	/// \param widget A pointer to the widget to remove
-	/// \returns True if the widget was succesfully removed from the list.
-	///          False if the widget was not in the list.
+	/// \param id The id of the widget
+	/// \returns The widget's address if it succeeds
+	///          nullptr if the widget was not found
 	////////////////////////////////////////////////
-	bool RemoveWidget(Widget* widget);
+	Widget* RemoveWidget(std::size_t id);
+
+	////////////////////////////////////////////////
+	/// \brief Get a widget from the widget list
+	///
+	/// \param id The id of the widget
+	/// \returns The widget's address if it succeeds
+	///          nullptr if the widget was not found
+	/// \note O(1) complexity
+	////////////////////////////////////////////////
+	Widget* GetWidget(std::size_t id);
+
+	////////////////////////////////////////////////
+	/// \brief Change the redrawing state of a widget
+	///
+	/// \param id The id of the widget
+	/// \param expired The new state of the widget
+	/// \returns True if it succeded
+	///          False if it failed
+	////////////////////////////////////////////////
+	bool SetWidgetExpired(std::size_t id, bool expired);
 
 	////////////////////////////////////////////////
 	/// \brief Redraw widgets to the screen

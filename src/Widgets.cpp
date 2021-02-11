@@ -313,7 +313,7 @@ Widgets::InputLine::InputLine(const String& text, std::size_t position)
 	m_maxSize(0)
 {
 	// Note: it works but has some kind of flicker with Wide chars (though, just visual)
-	const auto Left = [&](Termbox& tb) {
+	const auto Left = [&]() {
 		if (m_position == 0) [[unlikely]]
 			return;
 		--m_position;
@@ -339,7 +339,7 @@ Widgets::InputLine::InputLine(const String& text, std::size_t position)
 		}
 	};
 
-	const auto Right = [&](Termbox& tb) {
+	const auto Right = [&]() {
 		if (m_position >= m_text.size()) [[unlikely]]
 			return;
 		++m_position;
@@ -386,20 +386,20 @@ Widgets::InputLine::InputLine(const String& text, std::size_t position)
 	};
 
 	AddKeyboardInput({U"LEFT", Left});
-	AddKeyboardInput({U"C-LEFT", [&](Termbox& tb) {
+	AddKeyboardInput({U"C-LEFT", [&]() {
 
 	}});
 	AddKeyboardInput({U"RIGHT", Right});
-	AddKeyboardInput({U"C-RIGHT", [&](Termbox& tb) {
+	AddKeyboardInput({U"C-RIGHT", [&]() {
 
 	}});
-	AddKeyboardInput({U"UP", [&](Termbox& tb) {
+	AddKeyboardInput({U"UP", [&]() {
 		m_position = m_cursor = m_textOffset = m_leftScroll = 0;
 	}});
-	AddKeyboardInput({U"DOWN", [&](Termbox& tb) {
+	AddKeyboardInput({U"DOWN", [&]() {
 
 	}});
-	AddKeyboardInput({U"BACKSPACE", [&](Termbox& tb) {
+	AddKeyboardInput({U"BACKSPACE", [&]() {
 		if (m_position == 0) [[unlikely]]
 			return;
 
@@ -423,18 +423,18 @@ Widgets::InputLine::InputLine(const String& text, std::size_t position)
 		}
 	}});
 
-	AddKeyboardInput({U"ENTER", [&](Termbox& tb) {
+	AddKeyboardInput({U"ENTER", [&]() {
 	}});
 
-	AddKeyboardInput({U"ESC", [&](Termbox& tb) {
+	AddKeyboardInput({U"ESC", [&]() {
 		SetActive(false);
 		SetBackground(TBChar(U'#', {0xFF0000, 0xFFFFFF, TextStyle::Underline}));
 	}});
 
-	AddKeyboardInput({U"#SCHAR", [&, Right](Termbox& tb) {
+	AddKeyboardInput({U"#SCHAR", [&, Right]() {
 		if (m_text.size() >= m_maxSize && m_maxSize != 0) [[unlikely]]
 			return;
-		m_text.insert(m_text.begin()+m_position, tb.GetContext().ev.ch);
+		m_text.insert(m_text.begin()+m_position, Termbox::GetTermbox().GetContext().ev.ch);
 		//Right(tb);
 	}});
 
