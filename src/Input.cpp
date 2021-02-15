@@ -2,6 +2,7 @@
 #include "Widgets.hpp"
 #include "Termbox.hpp"
 #include <map>
+#include <cstring>
 
 // {{{ Mouse
 Mouse::Mouse(Type type, decltype(m_callback) callback)
@@ -273,13 +274,23 @@ KeyComb::KeyComb(const String& s, decltype(m_callback) callback)
 	m_matchState = false;
 
 	if (auto&& [success, pos] = SetComb(s); !success)
-		throw Util::Exception("Could not understand KeyComb '" + Util::StringConvert<char>(s) + "' Error at position " + std::to_string(pos) + ".");
+		throw Util::Exception("Could not understand KeyComb '" + Util::StringConvert<char>(s) + "'. Error at position " + std::to_string(pos) + ".");
+}
+
+KeyComb::KeyComb(const KeyComb& kc)
+{
+	m_keys_num = kc.m_keys_num;
+	m_callback = kc.m_callback;
+	m_matchState = kc.m_matchState;
+
+	m_keys = new Key[m_keys_num];
+	std::memcpy(m_keys, kc.m_keys, m_keys_num*sizeof(Key));
 }
 
 KeyComb::~KeyComb()
 {
-	//if (m_keys != nullptr)
-	//delete[] m_keys;
+	if (m_keys != nullptr)
+		delete[] m_keys;
 }
 
 bool KeyComb::operator==(const KeyComb& kc) const
@@ -300,6 +311,7 @@ enum KC_SPECIAL : std::uint32_t
 {
 	KC_SPECIAL_CHAR = 0xFFFFFFFF, // Char only
 	KC_SPECIAL_SCHAR = 0xFFFFFFFF - 1, // Char only, may have 'S'
+	KC_SPECIAL_ANY = 0xFFFFFFFF - 2, // Any key
 };
 
 std::pair<bool, std::size_t>
@@ -400,6 +412,8 @@ KeyComb::SetComb(const String& s)
 					keyv.push_back({ KC_SPECIAL_CHAR, Key::CHAR, meta });
 				if (key == U"#SCHAR")
 					keyv.push_back({ KC_SPECIAL_SCHAR, Key::CHAR, meta });
+				if (key == U"#ANY")
+					keyv.push_back({ KC_SPECIAL_ANY, Key::KEY, meta });
 				else
 					return false;
 			}
@@ -481,7 +495,11 @@ bool KeyComb::Match(Termbox& tb)
 		return 0;
 
 	const Key* k = &m_keys[m_matchState];
-	if (k->type == Key::CHAR) //; Match char first
+	if (k->code == KC_SPECIAL_ANY)
+	{
+		++m_matchState;
+	}
+	else if (k->type == Key::CHAR) //; Match char first
 	{
 		if ((k->meta == Key::ANY && k->code == ev.ch) ||
 			(k->meta == ev.meta && k->code == ev.ch))

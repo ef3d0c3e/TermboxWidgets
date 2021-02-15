@@ -274,6 +274,7 @@ public:
 	/// \see String
 	////////////////////////////////////////////////
 	TBString(const String& str, TBStyle s);
+	TBString(const StringView& str, TBStyle s);
 
 	////////////////////////////////////////////////
 	/// \brief Copy constructor
@@ -312,6 +313,13 @@ public:
 	////////////////////////////////////////////////
 	TBChar& operator[](std::size_t i);
 
+	////////////////////////////////////////////////
+	/// \brief Concatenation
+	/// \param tbs The TBString to append
+	///
+	/// \returns A reference to the TBString with tbs appended
+	////////////////////////////////////////////////
+	TBString& operator+(const TBString& tbs);
 
 	auto cbegin() const
 	{

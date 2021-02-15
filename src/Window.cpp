@@ -4,30 +4,32 @@
 // Will return true if at least one event has been processed
 bool Window::ProcessKeyboardEvent(Termbox& tb)
 {
-	for (auto& it : m_widgets)
+	bool matched = false;
+	for (auto it = m_widgets.rbegin(); it != m_widgets.rend(); ++it)
 	{
-		if (it.first->IsActive())
-			it.second = it.first->ProcessKeyboardEvent(tb);
-
-		if (it.second)
-			return true;
+		if (it->first->IsActive())
+		{
+			it->second |= it->first->ProcessKeyboardEvent(tb);
+			matched |= it->second;
+		}
 	}
 
-	return KeyboardInput::ProcessKeyboardEvent(tb); // Only redraw the whole window if needed
+	return matched | KeyboardInput::ProcessKeyboardEvent(tb); // Only redraw the whole window if needed
 }
 
 bool Window::ProcessMouseEvent(Termbox& tb, const Widget& w)
 {
-	for (auto& it : m_widgets)
+	bool matched = false;
+	for (auto it = m_widgets.rbegin(); it != m_widgets.rend(); ++it)
 	{
-		if (it.first->IsActive())
-			it.second = it.first->ProcessMouseEvent(tb, *it.first);
-
-		if (it.second)
-			return true;
+		if (it->first->IsActive())
+		{
+			it->second |= it->first->ProcessMouseEvent(tb, *it->first);
+			matched |= it->second;
+		}
 	}
 
-	return MouseInput::ProcessMouseEvent(tb, w);
+	return matched || MouseInput::ProcessMouseEvent(tb, w);
 }
 
 void Window::Draw()

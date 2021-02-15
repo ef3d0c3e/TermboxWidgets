@@ -389,11 +389,19 @@ struct ListSelectSettings
 template <ListSelectSettings Settings, class Entry>
 class ListSelect : public Widget
 {
-	std::function<std::pair<TBStyle, TBStyle>(std::size_t, Vec2i, int, bool, bool, Char)> m_drawEntryFn;
+public:
+	MAKE_CENUMV_Q(MarkType, std::uint8_t,
+		NONE, 0,
+		Selected, 1 << 0,
+		Tagged, 1 << 1,
+		Fav, 1 << 2,
+	)
+private:
+	std::function<std::pair<TBStyle, TBStyle>(std::size_t, Vec2i, int, bool, MarkType, Char)> m_drawEntryFn;
 
 	std::size_t m_entries;
 
-	std::vector<std::size_t> m_marked;
+	std::vector<MarkType> m_marked;
 	std::size_t m_position;
 	std::size_t m_offset;
 
@@ -434,7 +442,7 @@ public:
 					GetPosition()+Vec2i(left, y),
 					GetSize()[0]-left-Settings.RightMargin,
 					m_offset+static_cast<std::size_t>(y) == m_position,
-					false,
+					m_marked[m_offset+static_cast<std::size_t>(y)],
 					Settings.TrailingChar
 				);
 
@@ -491,6 +499,7 @@ public:
 				m_position = m_offset = 0;
 			}
 
+			OnChangePosition.Notify<EventWhen::AFTER>();
 			return;
 		}
 
@@ -532,6 +541,7 @@ public:
 					m_offset = m_position-GetSize()[1]+1;
 			}
 
+			OnChangePosition.Notify<EventWhen::AFTER>();
 			return;
 		}
 
@@ -591,7 +601,9 @@ public:
 
 	void ActionMouseClick(const Vec2i& pos)
 	{
-		ActionSetPosition(m_offset+pos[1]-GetPosition()[1]);
+		const std::size_t newPos = m_offset+pos[1]-GetPosition()[1];
+		if (newPos < m_entries)
+			ActionSetPosition(newPos);
 	}
 	// }}}
 
@@ -649,6 +661,9 @@ public:
 	void SetEntries(std::size_t entries)
 	{
 		m_entries = entries;
+		m_marked.clear();
+		m_marked.resize(entries);
+		std::fill(m_marked.begin(), m_marked.end(), MarkType::NONE);
 	}
 
 	////////////////////////////////////////////////

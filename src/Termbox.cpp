@@ -208,7 +208,7 @@ void Termbox::RenderLoop()
 	ReDraw();
 	Display();
 
-	while (!m_ctx.stop && tb_poll_event(&m_ctx.ev) != -1)
+	while (!m_ctx.stop && !m_ctx.forceEvent && tb_poll_event(&m_ctx.ev) != -1)
 	{
 		if (m_ctx.lock)
 			continue;
@@ -217,6 +217,9 @@ void Termbox::RenderLoop()
 
 		ReDraw();
 		Display();
+
+		if (m_ctx.forceEvent)
+			m_ctx.forceEvent = false;
 	}
 }
 
@@ -234,7 +237,7 @@ void Termbox::ForceDraw()
 
 Termbox::Context& Termbox::GetContext()
 {
-	return m_ctx;
+	return m_this->m_ctx;
 }
 
 Termbox& Termbox::GetTermbox()

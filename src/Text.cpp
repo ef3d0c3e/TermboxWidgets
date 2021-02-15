@@ -99,6 +99,14 @@ TBString::TBString(const String& str, TBStyle s)
 		m_string[i].ch = str[i];
 }
 
+TBString::TBString(const StringView& str, TBStyle s)
+{
+	std::size_t size = str.size();
+	m_string = std::vector<TBChar>(size, TBChar(0, s));
+	for (std::size_t i = 0; i < size; ++i)
+		m_string[i].ch = str[i];
+}
+
 TBString::TBString(const TBString& s)
 {
 	m_string = s.m_string;
@@ -128,6 +136,17 @@ const TBChar& TBString::operator[](std::size_t i) const
 TBChar& TBString::operator[](std::size_t i)
 {
 	return m_string[i];
+}
+
+TBString& TBString::operator+(const TBString& tbs)
+{
+	const std::size_t pos = Size();
+	m_string.resize(pos+tbs.Size());
+
+	for (std::size_t i = 0; i < tbs.Size(); ++i)
+		m_string[pos+i] = tbs[i];
+
+	return *this;
 }
 
 std::size_t TBString::Size() const

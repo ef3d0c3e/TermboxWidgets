@@ -145,6 +145,12 @@ public:
 	KeyComb(const String& s, decltype(m_callback) callback);
 
 	////////////////////////////////////////////////
+	/// \brief Copy constructor
+	/// \param kc The KeyComb
+	////////////////////////////////////////////////
+	KeyComb(const KeyComb& kc);
+
+	////////////////////////////////////////////////
 	/// \brief Destructor
 	////////////////////////////////////////////////
 	~KeyComb();
@@ -205,22 +211,21 @@ public:
 	virtual bool ProcessKeyboardEvent(Termbox& tb)
 	{
 		bool matched = false;
-		for (auto& kc : m_keys)
-		{
-			if (matched)
-				break;
-			matched |= kc.Match(tb);
-		}
+		for (auto it = m_keys.begin(); it != m_keys.end(); ++it)
+			matched |= it->Match(tb);
 		return matched;
 	}
 
 	////////////////////////////////////////////////
 	/// \brief Add an input
 	/// \param kc The Key combination event
+	/// \return The id of the KeyComb
 	////////////////////////////////////////////////
-	void AddKeyboardInput(const KeyComb& kc)
+	std::size_t AddKeyboardInput(const KeyComb& kc)
 	{
 		m_keys.push_back(kc);
+		
+		return m_keys.size()-1;
 	}
 
 	////////////////////////////////////////////////
@@ -231,6 +236,15 @@ public:
 	bool RemoveKeyboardInput(const KeyComb& kc)
 	{
 		return std::erase_if(m_keys, [&](const KeyComb& __kc){ return kc == __kc; }) != 0;
+	}
+
+	////////////////////////////////////////////////
+	/// \brief Remove an input
+	/// \param id The KeyComb's id
+	////////////////////////////////////////////////
+	void RemoveKeyboardInput(std::size_t id)
+	{
+		m_keys.erase(m_keys.begin()+id);
 	}
 
 	////////////////////////////////////////////////
@@ -261,8 +275,6 @@ public:
 		bool matched = false;
 		for (auto& m : m_mouse)
 		{
-			if (matched)
-				break;
 			matched |= m.Match(tb, w);
 		}
 		return matched;

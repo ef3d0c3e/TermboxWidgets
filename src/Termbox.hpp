@@ -49,6 +49,7 @@ class Termbox
 		bool hasRepeat = false;
 		tb_event ev;
 		bool lock = false;
+		bool forceEvent = false;
 	} m_ctx;
 
 	static inline Termbox* m_this;
@@ -204,7 +205,7 @@ public:
 	///
 	/// \returns The context
 	////////////////////////////////////////////////
-	Context& GetContext();
+	static Context& GetContext();
 
 	////////////////////////////////////////////////
 	/// \brief Get the termbox environement

@@ -9,6 +9,7 @@
 
 typedef char32_t Char;
 typedef std::basic_string<Char> String;
+typedef std::basic_string_view<Char> StringView;
 typedef Vector<int, 2, VectorSettings{ .UseFor = false }> Vec2i;
 
 
@@ -177,6 +178,8 @@ constexpr std::array<T, N1 + N2> concat(std::array<T1, N1> lhs, std::array<T2, N
 	
 	return result;
 }
+
+int SizeWide(const String& s);
 }
 /** @cond */
 #include "Util.tcc"

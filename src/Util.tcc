@@ -3,7 +3,6 @@
 #include <codecvt>
 #include <locale>
 
-
 template <typename T, typename ... Ts>
 constexpr std::array<T, sizeof...(Ts)+1> Util::make_array(T t, Ts... ts)
 {
