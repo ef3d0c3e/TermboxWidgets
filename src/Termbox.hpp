@@ -49,7 +49,12 @@ class Termbox
 		bool hasRepeat = false;
 		tb_event ev;
 		bool lock = false;
-		bool forceEvent = false;
+		bool stopInput = false;
+		bool dontResetRepeat = false;
+		bool noRepeat = false;
+
+		bool hasMatched = false; // (internal to input.hpp)
+		// Will be true if at least one key has matched, to prevent keybindings like "g t" to trigger "t" on the second key press
 	} m_ctx;
 
 	static inline Termbox* m_this;
@@ -150,7 +155,7 @@ public:
 	/// \returns The ID of the widget if it was succesfully added to the list.
 	///          std::size_t(-1) if insertion failed
 	////////////////////////////////////////////////
-	std::size_t AddWidget(Widget* widget);
+	static std::size_t AddWidget(Widget* widget);
 
 	////////////////////////////////////////////////
 	/// \brief Remove a widget from the widget list
@@ -159,7 +164,7 @@ public:
 	/// \returns The widget's address if it succeeds
 	///          nullptr if the widget was not found
 	////////////////////////////////////////////////
-	Widget* RemoveWidget(std::size_t id);
+	static Widget* RemoveWidget(std::size_t id);
 
 	////////////////////////////////////////////////
 	/// \brief Get a widget from the widget list
@@ -169,7 +174,17 @@ public:
 	///          nullptr if the widget was not found
 	/// \note O(1) complexity
 	////////////////////////////////////////////////
-	Widget* GetWidget(std::size_t id);
+	static Widget* GetWidget(std::size_t id);
+
+	////////////////////////////////////////////////
+	/// \brief Finds a widget ID
+	///
+	/// \param ptr The widget's pointer
+	/// \returns The widget's id if it succeeds
+	///          size_t(-1) if the widget was not found
+	/// \note O(n = m_widgets.size()) complexity
+	////////////////////////////////////////////////
+	static std::size_t FindWidget(Widget* ptr);
 
 	////////////////////////////////////////////////
 	/// \brief Change the redrawing state of a widget
@@ -179,7 +194,7 @@ public:
 	/// \returns True if it succeded
 	///          False if it failed
 	////////////////////////////////////////////////
-	bool SetWidgetExpired(std::size_t id, bool expired);
+	static bool SetWidgetExpired(std::size_t id, bool expired);
 
 	////////////////////////////////////////////////
 	/// \brief Redraw widgets to the screen

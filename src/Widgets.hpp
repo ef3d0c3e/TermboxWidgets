@@ -383,25 +383,16 @@ struct ListSelectSettings
 //	Vec2i pos,
 //	int w,
 //	bool hovered,
-//	bool marked,
 //	Char trailing
 //) -> int (width)
-template <ListSelectSettings Settings, class Entry>
+template <ListSelectSettings Settings, class Entry, class MarkType>
 class ListSelect : public Widget
 {
-public:
-	MAKE_CENUMV_Q(MarkType, std::uint8_t,
-		NONE, 0,
-		Selected, 1 << 0,
-		Tagged, 1 << 1,
-		Fav, 1 << 2,
-	)
-private:
-	std::function<std::pair<TBStyle, TBStyle>(std::size_t, Vec2i, int, bool, MarkType, Char)> m_drawEntryFn;
+	std::function<std::pair<TBStyle, TBStyle>(std::size_t, Vec2i, int, bool, Char)> m_drawEntryFn;
+	std::function<void(std::size_t, MarkType)> m_markFn;
 
 	std::size_t m_entries;
 
-	std::vector<MarkType> m_marked;
 	std::size_t m_position;
 	std::size_t m_offset;
 
@@ -442,7 +433,6 @@ public:
 					GetPosition()+Vec2i(left, y),
 					GetSize()[0]-left-Settings.RightMargin,
 					m_offset+static_cast<std::size_t>(y) == m_position,
-					m_marked[m_offset+static_cast<std::size_t>(y)],
 					Settings.TrailingChar
 				);
 
@@ -488,6 +478,7 @@ public:
 
 	// {{{ Actions
 	EventListener<> OnChangePosition;
+	EventListener<> OnMarkElement;
 	void ActionDown()
 	{
 		OnChangePosition.Notify<EventWhen::BEFORE>();
@@ -521,7 +512,7 @@ public:
 		const int trigger = GetSize()[1] * (100-Settings.ScrollTriggerDown) / 100;
 		if (m_position - m_offset >= static_cast<std::size_t>(trigger)
 			&& m_offset+GetSize()[1] < m_entries)
-				m_offset = std::min(m_entries-GetSize()[1], m_offset + m_position +1 - trigger);
+				m_offset = std::min(m_entries-GetSize()[1], m_position + 1 - trigger);
 
 		OnChangePosition.Notify<EventWhen::AFTER>();
 	}
@@ -575,7 +566,7 @@ public:
 		if (m_entries <= static_cast<std::size_t>(GetSize()[1]))
 		{
 			m_offset = 0;
-			m_position = pos;
+			m_position = std::min(m_entries-1, pos);
 		}
 		else if (pos <= m_position)
 		{
@@ -593,7 +584,7 @@ public:
 			const int trigger = GetSize()[1] * (100-Settings.ScrollTriggerDown) / 100;
 			if (m_position - m_offset >= static_cast<std::size_t>(trigger)
 				&& m_offset+GetSize()[1] < m_entries)
-					m_offset = std::min(m_entries-GetSize()[1], m_offset + m_position +1 - trigger);
+					m_offset = std::min(m_entries-GetSize()[1], m_position + 1 - trigger);
 		}
 
 		OnChangePosition.Notify<EventWhen::AFTER>();
@@ -605,10 +596,25 @@ public:
 		if (newPos < m_entries)
 			ActionSetPosition(newPos);
 	}
+
+	void ActionMarkN(std::size_t N, MarkType mark)
+	{
+		OnMarkElement.Notify<EventWhen::BEFORE>();
+
+		const auto max = std::min(m_entries-m_position, N);
+
+		for (std::size_t i = 0; i < max; ++i)
+			m_markFn(m_position+i, mark);
+
+		OnMarkElement.Notify<EventWhen::AFTER>();
+
+		ActionDownN(max);
+	}
 	// }}}
 
-	ListSelect(decltype(m_drawEntryFn) drawEntryFn):
+	ListSelect(decltype(m_drawEntryFn) drawEntryFn, decltype(m_markFn) markFn):
 		m_drawEntryFn(drawEntryFn),
+		m_markFn(markFn),
 		m_entries(0),
 		m_position(0),
 		m_offset(0),
@@ -661,9 +667,6 @@ public:
 	void SetEntries(std::size_t entries)
 	{
 		m_entries = entries;
-		m_marked.clear();
-		m_marked.resize(entries);
-		std::fill(m_marked.begin(), m_marked.end(), MarkType::NONE);
 	}
 
 	////////////////////////////////////////////////

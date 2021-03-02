@@ -71,6 +71,10 @@ struct tb_cell TBChar::operator()() const
 	return c;
 }
 
+TBString::TBString()
+{
+}
+
 TBString::TBString(const TBChar* a, std::size_t size)
 {
 	m_string = std::vector<TBChar>(size, TBChar());
@@ -154,9 +158,9 @@ std::size_t TBString::Size() const
 	return m_string.size();
 }
 
-std::size_t TBString::SizeWide() const
+int TBString::SizeWide() const
 {
-	std::size_t width = 0;
+	int width = 0;
 	for (const auto& c : m_string)
 		width += wcwidth(c.ch);
 

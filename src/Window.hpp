@@ -20,7 +20,7 @@ class Window : public Widget, public BorderItem
 	Vec2i m_isize;
 
 	virtual void Draw();
-	virtual bool ProcessKeyboardEvent(Termbox& tb);
+	virtual std::pair<bool, bool> ProcessKeyboardEvent(Termbox& tb);
 	virtual bool ProcessMouseEvent(Termbox& tb, const Widget& w);
 
 	void Resize(Vec2i dim);
@@ -122,6 +122,18 @@ public:
 	/// \brief Invalidate the window, marking it for complete redrawing
 	////////////////////////////////////////////////
 	void Invalidate();
+
+	////////////////////////////////////////////////
+	/// \brief Set all widgets to inactive
+	/// \returns A list of widgets with their state prior calling SetAllInactive()
+	////////////////////////////////////////////////
+	std::vector<std::pair<Widget*, bool>> SetAllInactive();
+
+	////////////////////////////////////////////////
+	/// \brief Restore widgets to the state stored in list
+	/// \param list The list of states for the widgets
+	////////////////////////////////////////////////
+	void RestoreAllActive(std::vector<std::pair<Widget*, bool>>&& list);
 };
 
 #endif // TERMBOXWIDGETS_WINDOW_HPP

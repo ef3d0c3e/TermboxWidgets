@@ -94,20 +94,20 @@ void Termbox::SetCursor(Vec2i pos)
 std::size_t Termbox::AddWidget(Widget* widget)
 {
 	// Optional check
-	for (const auto& it : m_widgets)
+	for (const auto& it : m_this->m_widgets)
 		if (it.first == widget)
 			return static_cast<std::size_t>(-1);
 
-	m_widgets.push_back({ widget, true });
-	return m_widgets.size()-1;
+	m_this->m_widgets.push_back({ widget, true });
+	return m_this->m_widgets.size()-1;
 }
 
 Widget* Termbox::RemoveWidget(std::size_t id)
 {
-	if (id < m_widgets.size())
+	if (id < m_this->m_widgets.size())
 	{
-		Widget* w = m_widgets[id].first;
-		m_widgets.erase(m_widgets.begin()+id);
+		Widget* w = m_this->m_widgets[id].first;
+		m_this->m_widgets.erase(m_this->m_widgets.begin()+id);
 		return w;
 	}
 
@@ -116,18 +116,27 @@ Widget* Termbox::RemoveWidget(std::size_t id)
 
 Widget* Termbox::GetWidget(std::size_t id)
 {
-	if (id < m_widgets.size())
-		return m_widgets[id].first;
+	if (id < m_this->m_widgets.size())
+		return m_this->m_widgets[id].first;
 
 	return nullptr;
 }
 
+std::size_t Termbox::FindWidget(Widget* ptr)
+{
+	for (std::size_t id = 0; id < m_this->m_widgets.size(); ++id)
+		if (m_this->m_widgets[id].first == ptr)
+			return id;
+	
+	return std::size_t(-1);
+}
+
 bool Termbox::SetWidgetExpired(std::size_t id, bool expired)
 {
-	if (id >= m_widgets.size())
+	if (id >= m_this->m_widgets.size())
 		return false;
 
-	m_widgets[id].second = expired;
+	m_this->m_widgets[id].second = expired;
 	return true;
 }
 
@@ -160,7 +169,7 @@ void Termbox::ProcessEvent()
 		case TB_EVENT_KEY: {
 			if constexpr (Settings::enable_repeat)
 			{
-				if (ev.ch >= U'0' && ev.ch <= U'9')
+				if (ev.ch >= U'0' && ev.ch <= U'9' && !m_ctx.noRepeat)
 				{
 					OnRepeatChange.Notify<EventWhen::BEFORE>(m_ctx.repeat);
 					m_ctx.hasRepeat = true;
@@ -170,20 +179,30 @@ void Termbox::ProcessEvent()
 					break;
 				}
 			}
+			bool matched = false;
 			for (auto& it : m_widgets)
 			{
 				if (it.first->IsActive())
-					it.second = it.first->ProcessKeyboardEvent(*this);
+				{
+					auto [c, m] = it.first->ProcessKeyboardEvent(*this);
+					it.second |= c;
+					matched |= m;
+				}
 			}
+			if (matched)
+				m_ctx.hasMatched = true;
+			else
+				m_ctx.hasMatched = false;
 			if constexpr (Settings::enable_repeat)
 			{
-				if (m_ctx.repeat != 0)
+				if (m_ctx.repeat != 0 && !m_ctx.dontResetRepeat)
 				{
 					OnRepeatChange.Notify<EventWhen::BEFORE>(m_ctx.repeat);
 					m_ctx.repeat = 0;
 					m_ctx.hasRepeat = false;
 					OnRepeatChange.Notify<EventWhen::AFTER>(m_ctx.repeat);
 				}
+				m_ctx.dontResetRepeat = false;
 			}
 		}
 		break;
@@ -196,6 +215,7 @@ void Termbox::ProcessEvent()
 		}
 		break;
 	}
+	m_ctx.stopInput = false;
 }
 
 void Termbox::RenderLoop()
@@ -208,7 +228,7 @@ void Termbox::RenderLoop()
 	ReDraw();
 	Display();
 
-	while (!m_ctx.stop && !m_ctx.forceEvent && tb_poll_event(&m_ctx.ev) != -1)
+	while (!m_ctx.stop  && tb_poll_event(&m_ctx.ev) != -1)
 	{
 		if (m_ctx.lock)
 			continue;
@@ -217,9 +237,6 @@ void Termbox::RenderLoop()
 
 		ReDraw();
 		Display();
-
-		if (m_ctx.forceEvent)
-			m_ctx.forceEvent = false;
 	}
 }
 

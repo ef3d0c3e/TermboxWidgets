@@ -24,7 +24,7 @@ public:
 		MOUSE_RELEASE, TB_KEY_MOUSE_RELEASE,
 		MOUSE_WHEEL_UP, TB_KEY_MOUSE_WHEEL_UP,
 		MOUSE_WHEEL_DOWN, TB_KEY_MOUSE_WHEEL_DOWN
-	)
+	);
 
 private:
 	Type m_type;
@@ -73,7 +73,7 @@ struct Key
 	MAKE_CENUMV_Q(Type, std::uint8_t,
 		CHAR, 0,
 		KEY, 1,
-	)
+	);
 	Type type;
 	MAKE_CENUMV_Q(Meta, std::uint8_t,
 		NONE, 0,
@@ -85,7 +85,7 @@ struct Key
 		CTRLSHIFT, 6,
 		ALTCTRL, 7,
 		ALTCTRLSHIFT, 8,
-	)
+	);
 	Meta meta;
 
 	////////////////////////////////////////////////
@@ -191,9 +191,10 @@ public:
 	////////////////////////////////////////////////
 	/// \brief Will match with the keys
 	/// \param tb The termbox environement
-	/// \return True if the callback was called
+	/// \return called -> True if a callback was called
+	/// matched -> True if something matched
 	////////////////////////////////////////////////
-	bool Match(Termbox& tb);
+	std::pair<bool, bool> Match(Termbox& tb);
 };
 // }}}
 
@@ -208,52 +209,32 @@ class KeyboardInput
 {
 	std::vector<KeyComb> m_keys;
 public:
-	virtual bool ProcessKeyboardEvent(Termbox& tb)
-	{
-		bool matched = false;
-		for (auto it = m_keys.begin(); it != m_keys.end(); ++it)
-			matched |= it->Match(tb);
-		return matched;
-	}
+	virtual std::pair<bool, bool> ProcessKeyboardEvent(Termbox& tb);
 
 	////////////////////////////////////////////////
 	/// \brief Add an input
 	/// \param kc The Key combination event
 	/// \return The id of the KeyComb
 	////////////////////////////////////////////////
-	std::size_t AddKeyboardInput(const KeyComb& kc)
-	{
-		m_keys.push_back(kc);
-		
-		return m_keys.size()-1;
-	}
+	std::size_t AddKeyboardInput(const KeyComb& kc);
 
 	////////////////////////////////////////////////
 	/// \brief Remove an input
 	/// \param kc The KeyComb event to remove
 	/// \returns true If an event was removed
 	////////////////////////////////////////////////
-	bool RemoveKeyboardInput(const KeyComb& kc)
-	{
-		return std::erase_if(m_keys, [&](const KeyComb& __kc){ return kc == __kc; }) != 0;
-	}
+	bool RemoveKeyboardInput(const KeyComb& kc);
 
 	////////////////////////////////////////////////
 	/// \brief Remove an input
 	/// \param id The KeyComb's id
 	////////////////////////////////////////////////
-	void RemoveKeyboardInput(std::size_t id)
-	{
-		m_keys.erase(m_keys.begin()+id);
-	}
+	void RemoveKeyboardInput(std::size_t id);
 
 	////////////////////////////////////////////////
 	/// \brief Remove all input
 	////////////////////////////////////////////////
-	void RemoveAllKeyboardInput()
-	{
-		m_keys.clear();
-	}
+	void RemoveAllKeyboardInput();
 };
 
 ////////////////////////////////////////////////
@@ -270,32 +251,18 @@ public:
 	/// \param w The widget
 	/// \returns true If at least one event has been processed
 	////////////////////////////////////////////////
-	virtual bool ProcessMouseEvent(Termbox& tb, const Widget& w)
-	{
-		bool matched = false;
-		for (auto& m : m_mouse)
-		{
-			matched |= m.Match(tb, w);
-		}
-		return matched;
-	}
+	virtual bool ProcessMouseEvent(Termbox& tb, const Widget& w);
 
 	////////////////////////////////////////////////
 	/// \brief Add an input
 	/// \param m The mouse event
 	////////////////////////////////////////////////
-	void AddMouseInput(const Mouse& m)
-	{
-		m_mouse.push_back(m);
-	}
+	void AddMouseInput(const Mouse& m);
 
 	////////////////////////////////////////////////
 	/// \brief Remove all input
 	////////////////////////////////////////////////
-	void RemoveAllMouseInput()
-	{
-		m_mouse.clear();
-	}
+	void RemoveAllMouseInput();
 };
 // }}}
 

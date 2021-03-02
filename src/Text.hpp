@@ -12,7 +12,7 @@ MAKE_CENUM_Q(TextStyle, int,
 	Reverse,   1 << 2,
 	Italic,    1 << 3,
 	Strike,    1 << 4
-)
+);
 /** @endcond */
 
 
@@ -36,7 +36,7 @@ public:
 		/// \see https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
 		COLORS_TRUECOLOR, TB_OUTPUT_TRUECOLOR, ///< 2^32 Colors (Some terminals)
 		///< \see https://en.wikipedia.org/wiki/ANSI_escape_code#24-bit
-	)
+	);
 
 private:
 	inline static COLOR_MODE s_mode = COLORS_8;
@@ -244,6 +244,11 @@ class TBString
 
 public:
 	////////////////////////////////////////////////
+	/// \brief Default constructor
+	////////////////////////////////////////////////
+	TBString();
+
+	////////////////////////////////////////////////
 	/// \brief Array constructor
 	///
 	/// \param a An array or TBChar
@@ -373,7 +378,7 @@ public:
 	///
 	/// \returns The size of the string in cell
 	////////////////////////////////////////////////
-	std::size_t SizeWide() const;
+	int SizeWide() const;
 	
 	////////////////////////////////////////////////
 	/// \brief Clear the string's content

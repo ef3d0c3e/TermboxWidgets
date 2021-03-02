@@ -21,7 +21,7 @@ MAKE_CENUM_Q(BorderFlag, std::uint8_t,
 	BottomLeft  , 0b10000000,
 	Corners     , 0b11110000,
 	Borders     , 0b00001111,
-	All         , Corners | Borders)
+	All         , Corners | Borders);
 /** @endcond */
 
 ////////////////////////////////////////////////
@@ -93,7 +93,21 @@ std::pair<int, std::size_t> TextLine(const TBString& s, Vec2i pos, int w, const 
 ///
 /// \note Passing ```U'\0'``` as a trailing char, will cause it to ignore it and write text until no space is left
 ////////////////////////////////////////////////
-std::pair<int, std::size_t> TextLine(const TBString& s, TextStyle textstyle, Vec2i pos, int w, const TBChar& trailing, std::size_t beg = 0ul);
+std::pair<int, std::size_t> TextLineStyle(const TBString& s, TextStyle textstyle, Vec2i pos, int w, const TBChar& trailing, std::size_t beg = 0ul);
+////////////////////////////////////////////////
+/// \brief Draw text on a single line
+///
+/// \param s The TBString to draw
+/// \param bg The background of the string
+/// \param pos The begining position of the text
+/// \param w The maximum width of the line
+/// \param trailing The character to indicate that the line was too long
+/// \param beg The begining position in the string
+/// \returns The width of the drawn line and the index of the last character drawn
+///
+/// \note Passing ```U'\0'``` as a trailing char, will cause it to ignore it and write text until no space is left
+////////////////////////////////////////////////
+std::pair<int, std::size_t> TextLineBackground(const TBString& s, Color bg, Vec2i pos, int w, const TBChar& trailing, std::size_t beg = 0ul);
 ////////////////////////////////////////////////
 /// \brief Draw text on a single line
 ///

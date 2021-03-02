@@ -1,3 +1,19 @@
+/*	Cenum - zero-cost enum replacement
+	Copyright (C) 2021  ef3d0c3e
+	
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	any later version.
+	
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <https://www.gnu.org/licenses/>. */
+
 #ifndef CENUM_HPP
 #define CENUM_HPP
 
@@ -46,8 +62,6 @@
 #define __CENUM_HAS_ARGS(...) __CENUM_BOOL(__CENUM_FIRST(__CENUM__END_OF_ARGUMENTS_ __VA_ARGS__)())
 #define __CENUM__END_OF_ARGUMENTS_() 0
 
-#define __CENUM_COUNTER() __COUNTER__
-
 #define __CENUM_MAP(__counter_base, __tp, __m, __first, __second, ...) \
 	__m(__COUNTER__ - __counter_base - 1, __tp, __first, __second)     \
 		__CENUM_IF_ELSE(__CENUM_HAS_ARGS(__VA_ARGS__))(                \
@@ -67,12 +81,12 @@
 		return __id;                           \
 	}
 #define MAKE_CENUMV_Q(__enum_name, __enum_type, ...) \
-	MAKE_CENUMV(__enum_name, __enum_type, const __enum_type&, __enum_type&, const __enum_type&&, std::size_t, __VA_ARGS__)
+	MAKE_CENUMV(__enum_name, __enum_type, const __enum_type&, __enum_type&, const __enum_type&&, unsigned long long, __VA_ARGS__)
 #define MAKE_CENUMV(__enum_name, __enum_type, __enum_cref, __enum__ref, __enum_crv, __enum_sz_tp, ...) \
 	__CENUM_EXPAND(__CENUM_EVAL(__CENUM_MAP(1, __enum_type, __CENUM_CVALUES, __VA_ARGS__)))            \
 	MAKE_CENUM(__enum_name, __enum_type, __enum_cref, __enum__ref, __enum_crv, __enum_sz_tp, __VA_ARGS__)
 #define MAKE_CENUM_Q(__enum_name, __enum_type, ...) \
-	MAKE_CENUM(__enum_name, __enum_type, const __enum_type&, __enum_type&, const __enum_type&&, std::size_t, __VA_ARGS__)
+	MAKE_CENUM(__enum_name, __enum_type, const __enum_type&, __enum_type&, const __enum_type&&, unsigned long long, __VA_ARGS__)
 #define MAKE_CENUM(__enum_name, __enum_type, __enum_cref, __enum__ref, __enum_crv, __enum_sz_tp, ...)       \
 	struct __enum_name                                                                                      \
 	{                                                                                                       \
@@ -87,7 +101,7 @@
 		__type value;                                                                                       \
                                                                                                             \
 		constexpr __enum_name() noexcept                                                                    \
-		: value(__type())                                                                                   \
+		: value(get<0>())                                                                                   \
 		{}                                                                                                  \
 		constexpr __enum_name(auto v) noexcept                                                              \
 		: value(v)                                                                                          \
@@ -119,6 +133,24 @@
 		constexpr __enum_name& operator=(auto v) noexcept                                                   \
 		{                                                                                                   \
 			value = v;                                                                                      \
+			return *this;                                                                                   \
+		}                                                                                                   \
+                                                                                                            \
+		constexpr __enum_name& operator~() noexcept                                                         \
+		{                                                                                                   \
+			value = ~value;                                                                                 \
+			return *this;                                                                                   \
+		}                                                                                                   \
+                                                                                                            \
+		constexpr __enum_name& operator|=(auto v) noexcept                                                  \
+		{                                                                                                   \
+			value |= v;                                                                                     \
+			return *this;                                                                                   \
+		}                                                                                                   \
+                                                                                                            \
+		constexpr __enum_name& operator&=(auto v) noexcept                                                  \
+		{                                                                                                   \
+			value &= v;                                                                                     \
 			return *this;                                                                                   \
 		}                                                                                                   \
                                                                                                             \
@@ -215,6 +247,33 @@
 				();                                                                                         \
 			}                                                                                               \
 		}                                                                                                   \
-	};
+                                                                                                            \
+	private:                                                                                                \
+		template <__size_type i, __size_type End, __size_type Inc, template <__size_type> class Fn>         \
+		static inline void iterate_impl()                                                                   \
+		{                                                                                                   \
+			if constexpr (i >= End)                                                                         \
+				return;                                                                                     \
+			else                                                                                            \
+			{                                                                                               \
+                                                                                                            \
+				Fn<i> f;                                                                                    \
+				f();                                                                                        \
+                                                                                                            \
+				iterate_impl<i + Inc, End, Inc, Fn>();                                                      \
+			}                                                                                               \
+		}                                                                                                   \
+                                                                                                            \
+	public:                                                                                                 \
+		template <__size_type Beg, __size_type End, __size_type Inc, template <__size_type> class Fn>       \
+		static void iterate()                                                                               \
+		{                                                                                                   \
+			static_assert(Beg <= End);                                                                      \
+			static_assert(End <= size);                                                                     \
+			static_assert(Inc != 0);                                                                        \
+                                                                                                            \
+			iterate_impl<Beg, End, Inc, Fn>();                                                              \
+		}                                                                                                   \
+	}
 
 #endif // CENUM_HPP

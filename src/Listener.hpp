@@ -6,7 +6,7 @@
 
 MAKE_CENUM_Q(EventWhen, std::uint8_t,
 	BEFORE, 0,
-	AFTER, 1)
+	AFTER, 1);
 
 template <class... Args>
 class EventListener

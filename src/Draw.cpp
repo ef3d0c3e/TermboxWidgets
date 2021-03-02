@@ -135,7 +135,7 @@ std::pair<int, std::size_t> Draw::TextLine(const TBString& s, Vec2i pos, int w, 
 	return { p, i };
 }
 
-std::pair<int, std::size_t> Draw::TextLine(const TBString& s, TextStyle textstyle, Vec2i pos, int w, const TBChar& trailing, std::size_t beg)
+std::pair<int, std::size_t> Draw::TextLineStyle(const TBString& s, TextStyle textstyle, Vec2i pos, int w, const TBChar& trailing, std::size_t beg)
 {
 	const auto& [x, y] = pos;
 	std::size_t i = beg;
@@ -145,6 +145,36 @@ std::pair<int, std::size_t> Draw::TextLine(const TBString& s, TextStyle textstyl
 	{
 		TBChar tbc = s[i];
 		tbc.s.s = static_cast<std::uint32_t>(tbc.s.s) | textstyle;
+		const auto cell = tbc();
+		int glyph_size = wcwidth(cell.ch);
+		if (p + glyph_size > w)
+		{
+			if (trailing.ch == U'\0')
+				break;
+			const auto cell = trailing();
+			if (i != 0)
+				p -= wcwidth(s[i - 1].ch);
+			tb_cell(x + p, y, &cell);
+			++p;
+			break;
+		}
+		tb_cell(x + p, y, &cell);
+		p += glyph_size;
+	} while (++i < s.Size());
+
+	return { p, i };
+}
+
+std::pair<int, std::size_t> Draw::TextLineBackground(const TBString& s, Color bg, Vec2i pos, int w, const TBChar& trailing, std::size_t beg)
+{
+	const auto& [x, y] = pos;
+	std::size_t i = beg;
+	int p = 0;
+
+	do
+	{
+		TBChar tbc = s[i];
+		tbc.s.bg = bg;
 		const auto cell = tbc();
 		int glyph_size = wcwidth(cell.ch);
 		if (p + glyph_size > w)

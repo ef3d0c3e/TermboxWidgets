@@ -72,6 +72,11 @@ bool Key::operator==(const Key& m) const
 	return code == m.code && meta == m.meta;
 }
 
+MAKE_CENUMV_Q(KC_SPECIAL, std::uint32_t,
+	KC_SPECIAL_CHAR, 0xFFFFFFFF, // Char only
+	KC_SPECIAL_SCHAR, 0xFFFFFFFF - 1, // Char only, may have 'S'
+	KC_SPECIAL_ANY, 0xFFFFFFFF - 2, // Any key
+);
 
 String Key::GetKeyName() const
 {
@@ -122,6 +127,12 @@ String Key::GetKeyName() const
 	}
 	if (type == Key::CHAR)
 	{
+		if (code == KC_SPECIAL_ANY)
+			return metaName + U"(any)";
+		else if (code == KC_SPECIAL_CHAR)
+			return metaName + U"(char)";
+		else if (code == KC_SPECIAL_SCHAR)
+			return metaName + U"(char nocase)";
 		String ret = U" ";
 		ret[0] = (upperCase) ? towupper(code) : code;
 		return metaName + ret;
@@ -174,11 +185,8 @@ String Key::GetKeyName() const
 				return metaName + U"↓";
 			case TB_KEY_ARROW_UP:
 				return metaName + U"↑";
-				/*
 			case TB_KEY_CTRL_TILDE: // Same as CTRL_2
-				return U"aC-~";
-				*/
-				/*
+				return U"C-~";
 			case TB_KEY_CTRL_A:
 				return U"C-A";
 			case TB_KEY_CTRL_B:
@@ -193,12 +201,10 @@ String Key::GetKeyName() const
 				return U"C-F";
 			case TB_KEY_CTRL_G:
 				return U"C-G";
-				*/
 			case TB_KEY_BACKSPACE: // Same as C-8
 				return U"BACKSPACE";
 			case TB_KEY_TAB: // Same as C-I
 				return U"TAB";
-				/*
 			case TB_KEY_CTRL_H: // Same as C-BACKSPACE
 				return U"C-H";
 			case TB_KEY_CTRL_J:
@@ -235,10 +241,8 @@ String Key::GetKeyName() const
 				return U"C-Y";
 			case TB_KEY_CTRL_Z:
 				return U"C-Z";
-				*/
 			case TB_KEY_ESC: // Same as C-[ and ^3
 				return U"ESC";
-				/*
 			case TB_KEY_CTRL_BACKSLASH: // Same as C-4
 				return U"C-\\";
 			case TB_KEY_CTRL_RSQ_BRACKET: // Same as C-5
@@ -247,7 +251,6 @@ String Key::GetKeyName() const
 				return U"C-6";
 			case TB_KEY_CTRL_UNDERSCORE: // Same as C-/ and ^7
 				return U"C-_";
-				*/
 			case TB_KEY_SPACE:
 				return U"SPC";
 		}
@@ -307,44 +310,80 @@ bool KeyComb::operator==(const KeyComb& kc) const
 	return true;
 }
 
-enum KC_SPECIAL : std::uint32_t
-{
-	KC_SPECIAL_CHAR = 0xFFFFFFFF, // Char only
-	KC_SPECIAL_SCHAR = 0xFFFFFFFF - 1, // Char only, may have 'S'
-	KC_SPECIAL_ANY = 0xFFFFFFFF - 2, // Any key
-};
-
 std::pair<bool, std::size_t>
 KeyComb::SetComb(const String& s)
 {
-	static const std::map<String, std::uint32_t> KeyMap = {
-		{ U"F1", 0xFFFF - 0 },
-		{ U"F2", 0xFFFF - 1 },
-		{ U"F3", 0xFFFF - 2 },
-		{ U"F4", 0xFFFF - 3 },
-		{ U"F5", 0xFFFF - 4 },
-		{ U"F6", 0xFFFF - 5 },
-		{ U"F7", 0xFFFF - 6 },
-		{ U"F8", 0xFFFF - 7 },
-		{ U"F9", 0xFFFF - 8 },
-		{ U"F10", 0xFFFF - 9 },
-		{ U"F11", 0xFFFF - 10 },
-		{ U"F12", 0xFFFF - 11 },
-		{ U"INS", 0xFFFF - 12 },
-		{ U"DEL", 0xFFFF - 13 },
-		{ U"HOME", 0xFFFF - 14 },
-		{ U"END", 0xFFFF - 15 },
-		{ U"PGUP", 0xFFFF - 16 },
-		{ U"PGDN", 0xFFFF - 17 },
-		{ U"LEFT", 0xFFFF - 18 },
-		{ U"RIGHT", 0xFFFF - 19 },
-		{ U"DOWN", 0xFFFF - 20 },
-		{ U"UP", 0xFFFF - 21 },
-		{ U"BACKSPACE", 0x08 },
-		{ U"TAB", 0x09 },
-		{ U"ENTER", 0x0D },
-		{ U"ESC", 0x1B },
-		{ U"SPC", 0x20 },
+	static const std::map<StringView, std::uint32_t> KeyMap = {
+		{ U"F1",          TB_KEY_F1 },
+		{ U"F2",          TB_KEY_F2 },
+		{ U"F3",          TB_KEY_F3 },
+		{ U"F4",          TB_KEY_F4 },
+		{ U"F5",          TB_KEY_F5 },
+		{ U"F6",          TB_KEY_F6 },
+		{ U"F7",          TB_KEY_F7 },
+		{ U"F8",          TB_KEY_F8 },
+		{ U"F9",          TB_KEY_F9 },
+		{ U"F10",         TB_KEY_F10 },
+		{ U"F11",         TB_KEY_F11 },
+		{ U"F12",         TB_KEY_F12 },
+		{ U"INS",         TB_KEY_INSERT },
+		{ U"DEL",         TB_KEY_DELETE },
+		{ U"HOME",        TB_KEY_HOME },
+		{ U"END",         TB_KEY_END },
+		{ U"PGUP",        TB_KEY_PGUP },
+		{ U"PGDN",        TB_KEY_PGDN },
+		{ U"LEFT",        TB_KEY_ARROW_LEFT },
+		{ U"RIGHT",       TB_KEY_ARROW_RIGHT },
+		{ U"DOWN",        TB_KEY_ARROW_DOWN },
+		{ U"UP",          TB_KEY_ARROW_UP },
+		{ U"BACKSPACE",   TB_KEY_BACKSPACE },
+		{ U"TAB",         TB_KEY_TAB },
+		{ U"ENTER",       TB_KEY_ENTER },
+		{ U"ESC",         TB_KEY_ESC },
+		{ U"SPC",         TB_KEY_SPACE },
+		{ U"C-BACKSPACE", TB_KEY_CTRL_H },
+	};
+
+	static const std::map<StringView, std::uint32_t> CtrlKeyMap = {
+		{ U"~",         TB_KEY_CTRL_TILDE },
+		{ U"2",         TB_KEY_CTRL_TILDE },
+		{ U"A",         TB_KEY_CTRL_A },
+		{ U"B",         TB_KEY_CTRL_B },
+		{ U"C",         TB_KEY_CTRL_C },
+		{ U"D",         TB_KEY_CTRL_D },
+		{ U"E",         TB_KEY_CTRL_E },
+		{ U"F",         TB_KEY_CTRL_F },
+		{ U"G",         TB_KEY_CTRL_G },
+		{ U"8",         TB_KEY_BACKSPACE },
+		{ U"I",         TB_KEY_TAB },
+		{ U"H",         TB_KEY_CTRL_H },
+		{ U"J",         TB_KEY_CTRL_J },
+		{ U"K",         TB_KEY_CTRL_K },
+		{ U"L",         TB_KEY_CTRL_L },
+		{ U"M",         TB_KEY_ENTER },
+		{ U"N",         TB_KEY_CTRL_N },
+		{ U"O",         TB_KEY_CTRL_O },
+		{ U"P",         TB_KEY_CTRL_P },
+		{ U"Q",         TB_KEY_CTRL_Q },
+		{ U"R",         TB_KEY_CTRL_R },
+		{ U"S",         TB_KEY_CTRL_S },
+		{ U"T",         TB_KEY_CTRL_T },
+		{ U"U",         TB_KEY_CTRL_U },
+		{ U"V",         TB_KEY_CTRL_V },
+		{ U"W",         TB_KEY_CTRL_W },
+		{ U"X",         TB_KEY_CTRL_X },
+		{ U"Y",         TB_KEY_CTRL_Y },
+		{ U"Z",         TB_KEY_CTRL_Z },
+		{ U"3",         TB_KEY_ESC },
+		{ U"[",         TB_KEY_ESC },
+		{ U"\\",        TB_KEY_CTRL_BACKSLASH },
+		{ U"4",         TB_KEY_CTRL_BACKSLASH },
+		{ U"]",         TB_KEY_CTRL_RSQ_BRACKET },
+		{ U"5",         TB_KEY_CTRL_RSQ_BRACKET },
+		{ U"6",         TB_KEY_CTRL_6 },
+		{ U"_",         TB_KEY_CTRL_UNDERSCORE },
+		{ U"/",         TB_KEY_CTRL_UNDERSCORE },
+		{ U"7",         TB_KEY_CTRL_UNDERSCORE },
 	};
 
 	std::vector<Key> keyv;
@@ -399,26 +438,45 @@ KeyComb::SetComb(const String& s)
 			}
 		}
 
+		// Special keys
 		auto k = getKey();
 		if (k)
 		{
-			keyv.push_back({ k, Key::KEY, meta });
+			keyv.push_back({ k, (k == TB_KEY_SPACE) ? Key::CHAR : Key::KEY, meta });
+			return true;
 		}
-		else
+		
+		// C-
+		if (meta & Key::CTRL)
+		{
+			if (auto found = CtrlKeyMap.find(Util::ToUpper(key));
+				found != KeyMap.end())
+			{
+				keyv.push_back({ found->second, Key::KEY, meta });
+				return true;
+			}
+		}
+		
+		// The rest
 		{
 			if (key.size() != 1)
 			{
 				if (key == U"#CHAR")
 					keyv.push_back({ KC_SPECIAL_CHAR, Key::CHAR, meta });
-				if (key == U"#SCHAR")
+				else if (key == U"#SCHAR")
 					keyv.push_back({ KC_SPECIAL_SCHAR, Key::CHAR, meta });
-				if (key == U"#ANY")
+				else if (key == U"#ANY")
 					keyv.push_back({ KC_SPECIAL_ANY, Key::KEY, meta });
 				else
 					return false;
 			}
 			else
-				keyv.push_back({ key[0], Key::CHAR, meta });
+			{
+				if (meta & Key::SHIFT || meta & Key::CTRLSHIFT || meta & Key::ALTSHIFT || meta & Key::ALTCTRLSHIFT)
+					keyv.push_back({ std::towupper(key[0]), Key::CHAR, meta });
+				else
+					keyv.push_back({ std::towlower(key[0]), Key::CHAR, meta });
+			}
 		}
 
 		return true;
@@ -488,33 +546,38 @@ String KeyComb::GetName() const
 	return r;
 }
 
-bool KeyComb::Match(Termbox& tb)
+std::pair<bool, bool> KeyComb::Match(Termbox& tb)
 {
+	if (m_matchState == 0 && tb.GetContext().hasMatched && m_keys[0].code != KC_SPECIAL_ANY)
+		return {false, false};
+
 	const tb_event& ev = tb.GetContext().ev;
 	if (m_keys_num == 0)
-		return 0;
+		return {false, false};
 
-	const Key* k = &m_keys[m_matchState];
-	if (k->code == KC_SPECIAL_ANY)
+	const auto oldState = m_matchState;
+	const Key& k = m_keys[m_matchState];
+	if (k.code == KC_SPECIAL_ANY)
 	{
 		++m_matchState;
 	}
-	else if (k->type == Key::CHAR) //; Match char first
+	else if (k.type == Key::CHAR) // Match char first
 	{
-		if ((k->meta == Key::ANY && k->code == ev.ch) ||
-			(k->meta == ev.meta && k->code == ev.ch))
+		if ((k.meta == Key::ANY && k.code == ev.ch) ||
+			(k.meta == ev.meta && k.code == ev.ch))
 			++m_matchState;
-		else if (k->code == KC_SPECIAL_CHAR && (k->meta == Key::ANY || k->meta == ev.meta))
+		else if (k.code == KC_SPECIAL_CHAR && ev.key == 0 &&
+				(k.meta == Key::ANY || k.meta == ev.meta))
 			++m_matchState;
-		else if (k->code == KC_SPECIAL_SCHAR &&
-				 (k->meta == Key::ANY || (k->meta | Key::Meta::SHIFT) == (ev.meta | Key::Meta::SHIFT)))
+		else if (k.code == KC_SPECIAL_SCHAR && ev.key == 0 &&
+				 (k.meta == Key::ANY || (k.meta | Key::Meta::SHIFT) == (ev.meta | Key::Meta::SHIFT)))
 			++m_matchState;
 		else
 			m_matchState = 0;
 	}
 	else
 	{
-		if ((k->meta == Key::ANY && k->code == ev.key) || (k->code == ev.key && k->meta == ev.meta))
+		if ((k.meta == Key::ANY && k.code == ev.key) || (k.code == ev.key && k.meta == ev.meta))
 			++m_matchState;
 		else
 			m_matchState = 0;
@@ -524,9 +587,79 @@ bool KeyComb::Match(Termbox& tb)
 	{
 		m_matchState = 0;
 		m_callback();
-		return true;
+		return {true, false};
 	}
 
-	return false;
+	return {false, m_matchState > oldState};
+}
+// }}}
+
+// {{{ KeyboardInput
+std::pair<bool, bool> KeyboardInput::ProcessKeyboardEvent(Termbox& tb)
+{
+	bool called = false;
+	bool matched = false;
+	for (auto it = m_keys.begin(); it != m_keys.end(); ++it)
+	{
+		auto [c, m] = it->Match(tb);
+		called |= c;
+		matched |= m;
+		if (Termbox::GetContext().stopInput)
+			break;
+	}
+	return {called, matched};
+}
+
+std::size_t KeyboardInput::AddKeyboardInput(const KeyComb& kc)
+{
+	m_keys.push_back(kc);
+	
+	return m_keys.size()-1;
+}
+
+bool KeyboardInput::RemoveKeyboardInput(const KeyComb& kc)
+{
+	return std::erase_if(m_keys, [&](const KeyComb& __kc){ return kc == __kc; }) != 0;
+}
+
+void KeyboardInput::RemoveKeyboardInput(std::size_t id)
+{
+	m_keys.erase(m_keys.begin()+id);
+}
+
+void KeyboardInput::RemoveAllKeyboardInput()
+{
+	m_keys.clear();
+}
+// }}}
+
+// {{{ MouseInput
+bool MouseInput::ProcessMouseEvent(Termbox& tb, const Widget& w)
+{
+	bool matched = false;
+	for (auto& m : m_mouse)
+	{
+		matched |= m.Match(tb, w);
+		if (Termbox::GetContext().stopInput)
+			break;
+	}
+	return matched;
+}
+
+////////////////////////////////////////////////
+/// \brief Add an input
+/// \param m The mouse event
+////////////////////////////////////////////////
+void MouseInput::AddMouseInput(const Mouse& m)
+{
+	m_mouse.push_back(m);
+}
+
+////////////////////////////////////////////////
+/// \brief Remove all input
+////////////////////////////////////////////////
+void MouseInput::RemoveAllMouseInput()
+{
+	m_mouse.clear();
 }
 // }}}

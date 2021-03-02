@@ -2,19 +2,25 @@
 #include "Draw.hpp"
 
 // Will return true if at least one event has been processed
-bool Window::ProcessKeyboardEvent(Termbox& tb)
+std::pair<bool, bool> Window::ProcessKeyboardEvent(Termbox& tb)
 {
 	bool matched = false;
+	bool called = false;
 	for (auto it = m_widgets.rbegin(); it != m_widgets.rend(); ++it)
 	{
 		if (it->first->IsActive())
 		{
-			it->second |= it->first->ProcessKeyboardEvent(tb);
-			matched |= it->second;
+			auto [c, m] = it->first->ProcessKeyboardEvent(tb);
+			it->second |= c;
+			called |= c;
+			matched |= m;
+			if (Termbox::GetContext().stopInput)
+				break;
 		}
 	}
 
-	return matched | KeyboardInput::ProcessKeyboardEvent(tb); // Only redraw the whole window if needed
+	auto [c, m] = KeyboardInput::ProcessKeyboardEvent(tb);
+	return {called | c, matched | m}; // Only redraw the whole window if needed
 }
 
 bool Window::ProcessMouseEvent(Termbox& tb, const Widget& w)
@@ -26,6 +32,8 @@ bool Window::ProcessMouseEvent(Termbox& tb, const Widget& w)
 		{
 			it->second |= it->first->ProcessMouseEvent(tb, *it->first);
 			matched |= it->second;
+			if (Termbox::GetContext().stopInput)
+				break;
 		}
 	}
 
@@ -187,4 +195,23 @@ void Window::ReDraw(Widget* widget) const
 void Window::Invalidate()
 {
 	m_invalidate = true;
+}
+
+std::vector<std::pair<Widget*, bool>> Window::SetAllInactive()
+{
+	std::vector<std::pair<Widget*, bool>> list(m_widgets.size(), {nullptr, false});
+
+	for (std::size_t i = 0; i < m_widgets.size(); ++i)
+	{
+		list[i] = {m_widgets[i].first, m_widgets[i].first->IsActive()};
+		m_widgets[i].first->SetActive(false);
+	}
+
+	return list;
+}
+
+void Window::RestoreAllActive(std::vector<std::pair<Widget*, bool>>&& list)
+{
+	for (std::size_t i = 0; i < list.size(); ++i)
+		list[i].first->SetActive(list[i].second);
 }
