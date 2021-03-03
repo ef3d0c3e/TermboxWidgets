@@ -21,12 +21,33 @@ Termbox::~Termbox()
 	tb_shutdown();
 }
 
-void Termbox::Draw(Drawable& d) const
+void Termbox::ReOpen()
+{
+	int err = tb_init();
+	if (err < 0)
+		throw Util::Exception("Could not initialize termbox : tb_init() returned " + std::to_string(err));
+	Color::SetMode(Color::GetMode());
+	tb_enable_mouse();
+
+	s_dim = Vec2i( tb_width(), tb_height() );
+	tb_set_clear_attributes(COLOR_DEFAULT(), m_this->m_bg());
+	m_this->m_ctx.clear = true;
+
+	// Sizes might have changed, plus it's a nice way to force redraw everything
+	Resize();
+}
+
+void Termbox::Close()
+{
+	tb_shutdown();
+}
+
+void Termbox::Draw(Drawable& d)
 {
 	d.Draw();
 }
 
-void Termbox::Clear() const
+void Termbox::Clear()
 {
 	tb_clear_buffer();
 }
@@ -36,9 +57,9 @@ void Termbox::Resize()
 	tb_clear_screen();
 	tb_clear_buffer();
 	s_dim = { tb_width(), tb_height() };
-	m_ctx.clear = true;
+	m_this->m_ctx.clear = true;
 
-	for (auto& it : m_widgets)
+	for (auto& it : m_this->m_widgets)
 	{
 		it.first->Resize(s_dim);
 		it.second = false;
@@ -48,7 +69,7 @@ void Termbox::Resize()
 void Termbox::Display()
 {
 	tb_render();
-	++m_ctx.frameCount;
+	++m_this->m_ctx.frameCount;
 }
 
 void Termbox::SetColor(Color bg)
@@ -142,26 +163,28 @@ bool Termbox::SetWidgetExpired(std::size_t id, bool expired)
 
 void Termbox::ReDraw()
 {
-	if (m_ctx.clear)
+	if (m_this->m_ctx.clear)
 		Clear();
 
-	for (auto& it : m_widgets)
+	for (auto& it : m_this->m_widgets)
 	{
-		if (it.second || m_ctx.clear)
+		if (it.second || m_this->m_ctx.clear)
 		{
 			if (it.first->IsVisible())
-				this->Draw(*it.first);
+				m_this->Draw(*it.first);
 			it.second = false;
 		}
 	}
 
-	if (m_ctx.clear)
-		m_ctx.clear = false;
+	if (m_this->m_ctx.clear)
+		m_this->m_ctx.clear = false;
 }
 
 void Termbox::ProcessEvent()
 {
-	tb_event& ev = m_ctx.ev;
+	if (m_this->m_ctx.stop)
+		return;
+	tb_event& ev = m_this->m_ctx.ev;
 	switch (ev.type)
 	{
 		case TB_EVENT_RESIZE:
@@ -169,53 +192,53 @@ void Termbox::ProcessEvent()
 		case TB_EVENT_KEY: {
 			if constexpr (Settings::enable_repeat)
 			{
-				if (ev.ch >= U'0' && ev.ch <= U'9' && !m_ctx.noRepeat)
+				if (ev.ch >= U'0' && ev.ch <= U'9' && !m_this->m_ctx.noRepeat)
 				{
-					OnRepeatChange.Notify<EventWhen::BEFORE>(m_ctx.repeat);
-					m_ctx.hasRepeat = true;
-					m_ctx.repeat *= 10;
-					m_ctx.repeat += ev.ch-U'0';
-					OnRepeatChange.Notify<EventWhen::AFTER>(m_ctx.repeat);
+					OnRepeatChange.Notify<EventWhen::BEFORE>(m_this->m_ctx.repeat);
+					m_this->m_ctx.hasRepeat = true;
+					m_this->m_ctx.repeat *= 10;
+					m_this->m_ctx.repeat += ev.ch-U'0';
+					OnRepeatChange.Notify<EventWhen::AFTER>(m_this->m_ctx.repeat);
 					break;
 				}
 			}
 			bool matched = false;
-			for (auto& it : m_widgets)
+			for (auto& it : m_this->m_widgets)
 			{
 				if (it.first->IsActive())
 				{
-					auto [c, m] = it.first->ProcessKeyboardEvent(*this);
+					auto [c, m] = it.first->ProcessKeyboardEvent(*m_this);
 					it.second |= c;
 					matched |= m;
 				}
 			}
 			if (matched)
-				m_ctx.hasMatched = true;
+				m_this->m_ctx.hasMatched = true;
 			else
-				m_ctx.hasMatched = false;
+				m_this->m_ctx.hasMatched = false;
 			if constexpr (Settings::enable_repeat)
 			{
-				if (m_ctx.repeat != 0 && !m_ctx.dontResetRepeat)
+				if (m_this->m_ctx.repeat != 0 && !m_this->m_ctx.dontResetRepeat)
 				{
-					OnRepeatChange.Notify<EventWhen::BEFORE>(m_ctx.repeat);
-					m_ctx.repeat = 0;
-					m_ctx.hasRepeat = false;
-					OnRepeatChange.Notify<EventWhen::AFTER>(m_ctx.repeat);
+					OnRepeatChange.Notify<EventWhen::BEFORE>(m_this->m_ctx.repeat);
+					m_this->m_ctx.repeat = 0;
+					m_this->m_ctx.hasRepeat = false;
+					OnRepeatChange.Notify<EventWhen::AFTER>(m_this->m_ctx.repeat);
 				}
-				m_ctx.dontResetRepeat = false;
+				m_this->m_ctx.dontResetRepeat = false;
 			}
 		}
 		break;
 		case TB_EVENT_MOUSE: {
-			for (auto& it : m_widgets)
+			for (auto& it :m_this-> m_widgets)
 			{
 				if (it.first->IsActive())
-					it.second = it.first->ProcessMouseEvent(*this, *it.first);
+					it.second = it.first->ProcessMouseEvent(*m_this, *it.first);
 			}
 		}
 		break;
 	}
-	m_ctx.stopInput = false;
+	m_this->m_ctx.stopInput = false;
 }
 
 void Termbox::RenderLoop()
@@ -228,12 +251,14 @@ void Termbox::RenderLoop()
 	ReDraw();
 	Display();
 
-	while (!m_ctx.stop  && tb_poll_event(&m_ctx.ev) != -1)
+	while (!m_this->m_ctx.stop  && tb_poll_event(&m_this->m_ctx.ev) != -1)
 	{
-		if (m_ctx.lock)
+		if (m_this->m_ctx.lock)
 			continue;
 
 		ProcessEvent();
+		if (m_this->m_ctx.stop)
+			return;
 
 		ReDraw();
 		Display();
@@ -242,14 +267,14 @@ void Termbox::RenderLoop()
 
 void Termbox::ForceDraw()
 {
-	for (auto& it : m_widgets)
+	for (auto& it : m_this->m_widgets)
 	{
 		if (it.first->IsVisible())
-			this->Draw(*it.first);
+			m_this->Draw(*it.first);
 	}
 
-	if (m_ctx.clear)
-		m_ctx.clear = false;
+	if (m_this->m_ctx.clear)
+		m_this->m_ctx.clear = false;
 }
 
 Termbox::Context& Termbox::GetContext()

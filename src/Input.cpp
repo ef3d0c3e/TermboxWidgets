@@ -617,6 +617,11 @@ std::size_t KeyboardInput::AddKeyboardInput(const KeyComb& kc)
 	return m_keys.size()-1;
 }
 
+std::size_t KeyboardInput::AddKeyboardInput(const String& key, std::function<void()> callback)
+{
+	return KeyboardInput::AddKeyboardInput({key, callback});
+}
+
 bool KeyboardInput::RemoveKeyboardInput(const KeyComb& kc)
 {
 	return std::erase_if(m_keys, [&](const KeyComb& __kc){ return kc == __kc; }) != 0;

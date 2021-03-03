@@ -219,6 +219,31 @@ public:
 	std::size_t AddKeyboardInput(const KeyComb& kc);
 
 	////////////////////////////////////////////////
+	/// \brief Add single input
+	/// \param key The key that triggers callback
+	/// \param callback The callback
+	/// \return The id of the KeyComb
+	////////////////////////////////////////////////
+	std::size_t AddKeyboardInput(const String& key, std::function<void()> callback);
+
+	////////////////////////////////////////////////
+	/// \brief Add multiple input
+	/// \param keys The array of keys that trigger callback
+	/// \param callback The callback
+	/// \return The id of the latest added KeyComb
+	////////////////////////////////////////////////
+	template <class T, std::size_t N> requires std::is_same<T, String>::value || std::is_same<T, const Char*>::value
+	std::size_t AddKeyboardInput(const std::array<T, N>& keys, std::function<void()> callback)
+	{
+		[&]<std::size_t... i>(std::index_sequence<i...>)
+		{
+			((AddKeyboardInput({keys[i], callback})), ...);
+		}(std::make_index_sequence<N>{});
+
+		return m_keys.size()-1;
+	}
+
+	////////////////////////////////////////////////
 	/// \brief Remove an input
 	/// \param kc The KeyComb event to remove
 	/// \returns true If an event was removed
