@@ -109,6 +109,8 @@ void Draw::Vertical(std::function<struct tb_cell(const struct tb_cell&, Vec2i po
 
 std::pair<int, std::size_t> Draw::TextLine(const TBString& s, Vec2i pos, int w, const TBChar& trailing, std::size_t beg)
 {
+	if (s.Size() == 0)
+		return {0 , beg};
 	const auto& [x, y] = pos;
 	std::size_t i = beg;
 	int p = 0;
@@ -137,6 +139,8 @@ std::pair<int, std::size_t> Draw::TextLine(const TBString& s, Vec2i pos, int w, 
 
 std::pair<int, std::size_t> Draw::TextLineStyle(const TBString& s, TextStyle textstyle, Vec2i pos, int w, const TBChar& trailing, std::size_t beg)
 {
+	if (s.Size() == 0)
+		return {0 , beg};
 	const auto& [x, y] = pos;
 	std::size_t i = beg;
 	int p = 0;
@@ -167,6 +171,8 @@ std::pair<int, std::size_t> Draw::TextLineStyle(const TBString& s, TextStyle tex
 
 std::pair<int, std::size_t> Draw::TextLineBackground(const TBString& s, Color bg, Vec2i pos, int w, const TBChar& trailing, std::size_t beg)
 {
+	if (s.Size() == 0)
+		return {0 , beg};
 	const auto& [x, y] = pos;
 	std::size_t i = beg;
 	int p = 0;
@@ -197,6 +203,8 @@ std::pair<int, std::size_t> Draw::TextLineBackground(const TBString& s, Color bg
 
 std::pair<int, std::size_t> Draw::TextLine(const String& s, const TBStyle& style, Vec2i pos, int w, const TBChar& trailing, std::size_t beg)
 {
+	if (s.size() == 0)
+		return {0 , beg};
 	const auto& [x, y] = pos;
 	std::size_t i = beg;
 	int p = 0;

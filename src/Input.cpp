@@ -329,6 +329,7 @@ KeyComb::SetComb(const String& s)
 		{ U"INS",         TB_KEY_INSERT },
 		{ U"DEL",         TB_KEY_DELETE },
 		{ U"HOME",        TB_KEY_HOME },
+		{ U"TAB",         TB_KEY_TAB },
 		{ U"END",         TB_KEY_END },
 		{ U"PGUP",        TB_KEY_PGUP },
 		{ U"PGDN",        TB_KEY_PGDN },
@@ -337,7 +338,6 @@ KeyComb::SetComb(const String& s)
 		{ U"DOWN",        TB_KEY_ARROW_DOWN },
 		{ U"UP",          TB_KEY_ARROW_UP },
 		{ U"BACKSPACE",   TB_KEY_BACKSPACE },
-		{ U"TAB",         TB_KEY_TAB },
 		{ U"ENTER",       TB_KEY_ENTER },
 		{ U"ESC",         TB_KEY_ESC },
 		{ U"SPC",         TB_KEY_SPACE },
@@ -442,6 +442,8 @@ KeyComb::SetComb(const String& s)
 		auto k = getKey();
 		if (k)
 		{
+			if (k == TB_KEY_TAB)
+				meta = Key::CTRL;
 			keyv.push_back({ k, (k == TB_KEY_SPACE) ? Key::CHAR : Key::KEY, meta });
 			return true;
 		}
