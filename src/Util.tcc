@@ -23,16 +23,36 @@ std::basic_string<T> Util::StringConvert(const std::basic_string<U>& s)
 	if constexpr (std::is_same_v<T, U>)
 		return s;
 
-	std::wstring_convert<std::codecvt_utf8<Char>, Char> conv;
 	if constexpr (std::is_same_v<T, Char>)
 	{
 		if constexpr (std::is_same_v<U, char>)
+		{
+			std::wstring_convert<std::codecvt_utf8<Char>, Char> conv;
 			return conv.from_bytes(s);
+		}
 	}
 	else if constexpr (std::is_same_v<T, char>)
 	{
 		if constexpr (std::is_same_v<U, Char>)
+		{
+			std::wstring_convert<std::codecvt_utf8<Char>, Char> conv;
 			return conv.to_bytes(s);
+		}
+	}
+	else if constexpr (std::is_same_v<T, wchar_t>)
+	{
+		if constexpr (std::is_same_v<U, Char>)
+		{
+			[]<bool v = false>() // only assert if conversion is tried
+			{
+				static_assert(v || sizeof(wchar_t) == sizeof(char32_t));
+			}();
+
+			std::wstring w(s.size(), L'\0');
+			for (std::size_t i = 0; i < s.size(); ++i)
+				w[i] = s[i];
+			return w;
+		}
 	}
 }
 
@@ -110,7 +130,7 @@ String Util::ToString(T x, std::function<Char(T)> charFn)
 	{
 		if (x < T(0))
 		{
-			s += U"-";
+			s += U'-';
 			x = -x;
 		}
 	}

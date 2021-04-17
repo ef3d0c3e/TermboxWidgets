@@ -627,7 +627,7 @@ public:
 		RemoveAllKeyboardInput();
 
 		AddKeyboardInput(KeyComb(U"DOWN", [this]()
-		{ 
+		{
 			Termbox& tb = Termbox::GetTermbox();
 			if (tb.GetContext().repeat == 0) [[likely]]
 				ActionDown();
@@ -638,7 +638,7 @@ public:
 		AddMouseInput(Mouse(std::make_pair(Vec2i(0, 0), GetSize()), Mouse::MOUSE_WHEEL_DOWN,
 					[this](const Vec2i&){ ActionDownN(1); }));
 		AddKeyboardInput(KeyComb(U"UP", [this]()
-		{ 
+		{
 			Termbox& tb = Termbox::GetTermbox();
 			if (tb.GetContext().repeat == 0) [[likely]]
 				ActionUp();

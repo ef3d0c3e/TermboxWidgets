@@ -1,7 +1,6 @@
 #ifndef TERMBOXWIDGETS_LISTENER_HPP
 #define TERMBOXWIDGETS_LISTENER_HPP
 
-#include <functional>
 #include "Settings.hpp"
 
 MAKE_CENUM_Q(EventWhen, std::uint8_t,
