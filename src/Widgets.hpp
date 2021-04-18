@@ -385,7 +385,7 @@ struct ListSelectSettings
 //	bool hovered,
 //	Char trailing
 //) -> int (width)
-template <ListSelectSettings Settings, class Entry, class MarkType>
+template <ListSelectSettings Settings, class MarkType>
 class ListSelect : public Widget
 {
 	std::function<std::pair<TBStyle, TBStyle>(std::size_t, Vec2i, int, bool, Char)> m_drawEntryFn;
@@ -400,8 +400,11 @@ class ListSelect : public Widget
 
 public:
 	// {{{ Draw
+	EventListener<> OnDraw;
 	virtual void Draw()
 	{
+		OnDraw.Notify<EventWhen::BEFORE>();
+
 		int numberWidth = 0; // Width for numbers
 		if constexpr (Settings.DrawNumbers)
 		{
@@ -473,6 +476,8 @@ public:
 			Draw::Horizontal({m_bg.ch, s1}, GetPosition()+Vec2i(Settings.LeftMargin+numberWidth, y), Settings.NumberSpacing);
 			Draw::Horizontal({m_bg.ch, s1}, GetPosition()+Vec2i(GetSize()[0]-Settings.RightMargin, y), Settings.RightMargin);
 		}
+
+		OnDraw.Notify<EventWhen::AFTER>();
 	}
 	// }}}
 

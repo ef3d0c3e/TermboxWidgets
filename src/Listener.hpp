@@ -100,20 +100,6 @@ public:
 	////////////////////////////////////////////////
 	EventListener& GetEvent(std::size_t id, EventWhen when)
 	{
-		if (when == EventWhen::BEFORE)
-		{
-			if (id >= m_fnBefore.size())
-				throw Util::Exception("Tried to get Event with invalid id.");
-
-			return m_fnBefore[id];
-		}
-		else if (when == EventWhen::AFTER)
-		{
-			if (id >= m_fnAfter.size())
-				throw Util::Exception("Tried to get Event with invalid id.");
-
-			return m_fnAfter[id];
-		}
 		static const std::string msg("Tried to get Event with invalid id");
 		switch (when)
 		{
