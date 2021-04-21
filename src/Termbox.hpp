@@ -53,8 +53,8 @@ class Termbox
 		bool dontResetRepeat = false;
 		bool noRepeat = false;
 
-		bool hasMatched = false; // (internal to input.hpp)
-		// Will be true if at least one key has matched, to prevent keybindings like "g t" to trigger "t" on the second key press
+		int hasMatched = 0; // (internal to input.hpp)
+		// Will be >0 if at least one key has matched, to prevent keybindings like "g t" to trigger "t" on the second key press
 	} m_ctx;
 
 	static inline Termbox* m_this;

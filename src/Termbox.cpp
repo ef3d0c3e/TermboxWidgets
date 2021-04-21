@@ -213,9 +213,9 @@ void Termbox::ProcessEvent()
 				}
 			}
 			if (matched)
-				m_this->m_ctx.hasMatched = true;
+				++m_this->m_ctx.hasMatched;
 			else
-				m_this->m_ctx.hasMatched = false;
+				m_this->m_ctx.hasMatched = 0;
 			if constexpr (Settings::enable_repeat)
 			{
 				if (m_this->m_ctx.repeat != 0 && !m_this->m_ctx.dontResetRepeat)
