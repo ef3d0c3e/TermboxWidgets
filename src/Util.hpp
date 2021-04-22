@@ -10,7 +10,27 @@
 typedef char32_t Char;
 typedef std::basic_string<Char> String;
 typedef std::basic_string_view<Char> StringView;
-typedef Vector<int, 2, VectorSettings{ .UseFor = false }> Vec2i;
+
+template <class T, std::size_t N>
+struct __Vec2iData
+{ }; // This will fail the constraint
+
+template<>
+struct __Vec2iData<int, 2>
+{
+	int x, y;
+
+	const int& operator[](std::size_t i) const
+	{
+		return *(reinterpret_cast<const int*>(this) + i);
+	}
+
+	int& operator[](std::size_t i)
+	{
+		return *(reinterpret_cast<int*>(this) + i);
+	}
+};
+typedef Vector<int, 2, __Vec2iData> Vec2i;
 
 
 ////////////////////////////////////////////////

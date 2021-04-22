@@ -4,6 +4,7 @@
 #include "Input.hpp"
 #include "Timed.hpp"
 #include "Listener.hpp"
+#include <deque>
 class Widget;
 class Window;
 class Termbox;
@@ -53,10 +54,11 @@ class Termbox
 		bool dontResetRepeat = false;
 		bool noRepeat = false;
 
-		int hasMatched = 0; // (internal to input.hpp)
+		std::size_t hasMatched = 0; // (internal to input.hpp)
 		// Will be >0 if at least one key has matched, to prevent keybindings like "g t" to trigger "t" on the second key press
 	} m_ctx;
 
+	static inline std::deque<Widget*> s_deleteQueue;
 	static inline Termbox* m_this;
 public:
 	////////////////////////////////////////////////
@@ -171,10 +173,11 @@ public:
 	/// \brief Remove a widget from the widget list
 	///
 	/// \param id The id of the widget
+	/// \param del If true, will delete the widget after the current event
 	/// \returns The widget's address if it succeeds
 	///          nullptr if the widget was not found
 	////////////////////////////////////////////////
-	static Widget* RemoveWidget(std::size_t id);
+	static Widget* RemoveWidget(std::size_t id, bool del);
 
 	////////////////////////////////////////////////
 	/// \brief Get a widget from the widget list

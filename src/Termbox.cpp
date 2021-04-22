@@ -123,12 +123,14 @@ std::size_t Termbox::AddWidget(Widget* widget)
 	return m_this->m_widgets.size()-1;
 }
 
-Widget* Termbox::RemoveWidget(std::size_t id)
+Widget* Termbox::RemoveWidget(std::size_t id, bool del)
 {
 	if (id < m_this->m_widgets.size())
 	{
 		Widget* w = m_this->m_widgets[id].first;
 		m_this->m_widgets.erase(m_this->m_widgets.begin()+id);
+		if (del)
+			s_deleteQueue.push_back(w);
 		return w;
 	}
 
@@ -257,6 +259,12 @@ void Termbox::RenderLoop()
 			continue;
 
 		ProcessEvent();
+		if (!s_deleteQueue.empty()) [[unlikely]]
+		{
+			for (auto w : s_deleteQueue)
+				delete w;
+			s_deleteQueue.clear();
+		}
 		if (m_this->m_ctx.stop)
 			return;
 
