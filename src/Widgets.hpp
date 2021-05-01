@@ -377,6 +377,12 @@ struct ListSelectSettings
 	bool Cycling = true;
 };
 
+MAKE_CENUM_Q(MarkFnAction, std::uint8_t,
+	SET, 0,
+	TOGGLE, 1,
+	REMOVE, 2,
+);
+
 //DrawEntryFn(
 //	std::size_t i,
 //	const std::vector<Entry>& entries,
@@ -389,7 +395,7 @@ template <ListSelectSettings Settings, class MarkType>
 class ListSelect : public Widget
 {
 	std::function<std::pair<TBStyle, TBStyle>(std::size_t, Vec2i, int, bool, Char)> m_drawEntryFn;
-	std::function<void(std::size_t, MarkType)> m_markFn;
+	std::function<void(std::size_t, MarkType, MarkFnAction)> m_markFn;
 
 	std::size_t m_entries;
 
@@ -602,14 +608,14 @@ public:
 			ActionSetPosition(newPos);
 	}
 
-	void ActionMarkN(std::size_t N, MarkType mark)
+	void ActionMarkN(std::size_t N, MarkType mark, MarkFnAction action)
 	{
 		OnMarkElement.Notify<EventWhen::BEFORE>();
 
 		const auto max = std::min(m_entries-m_position, N);
 
 		for (std::size_t i = 0; i < max; ++i)
-			m_markFn(m_position+i, mark);
+			m_markFn(m_position+i, mark, action);
 
 		OnMarkElement.Notify<EventWhen::AFTER>();
 

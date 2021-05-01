@@ -550,7 +550,7 @@ String KeyComb::GetName() const
 
 std::pair<bool, bool> KeyComb::Match(Termbox& tb)
 {
-	if (m_matchState != tb.GetContext().hasMatched && m_keys[0].code != KC_SPECIAL_ANY)
+	if (m_matchState != tb.GetContext().hasMatched && m_keys[0].code != KC_SPECIAL_ANY && m_keys[0].code != KC_SPECIAL_SCHAR && m_keys[0].code != KC_SPECIAL_CHAR)
 		return {false, false};
 
 	const tb_event& ev = tb.GetContext().ev;

@@ -1,7 +1,7 @@
 #include "Termbox.hpp"
 #include "Widgets.hpp"
 
-Termbox::Termbox(Color::COLOR_MODE mode, Color bg)
+Termbox::Termbox(Color::COLOR_MODE mode, Color bg, std::function<bool(void)> predicate)
 {
 	m_bg = bg;
 	int err = tb_init();
@@ -11,6 +11,7 @@ Termbox::Termbox(Color::COLOR_MODE mode, Color bg)
 	tb_enable_mouse();
 
 	s_dim = Vec2i( tb_width(), tb_height() );
+	s_predicate = predicate;
 	tb_set_clear_attributes(COLOR_DEFAULT(), bg());
 
 	m_this = this;
@@ -253,7 +254,7 @@ void Termbox::RenderLoop()
 	ReDraw();
 	Display();
 
-	while (!m_this->m_ctx.stop  && tb_poll_event(&m_this->m_ctx.ev) != -1)
+	while (!m_this->m_ctx.stop  && (tb_poll_event(&m_this->m_ctx.ev) != -1 || s_predicate()))
 	{
 		if (m_this->m_ctx.lock)
 			continue;

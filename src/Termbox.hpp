@@ -38,6 +38,7 @@ class Termbox
 	Color m_bg;
 
 	static inline Vec2i s_dim;
+	static inline std::function<bool(void)> s_predicate;
 
 	std::vector<std::pair<Widget*, bool>> m_widgets;
 
@@ -67,10 +68,11 @@ public:
 	///
 	/// \param mode The color output mode
 	/// \param bg The background color
+	/// \param pedicate Custom predicate, if it returns true, will process events
 	/// \throws Util::Exception If termbox could not be initialized
 	/// \see Color
 	////////////////////////////////////////////////
-	Termbox(Color::COLOR_MODE mode, Color bg);
+	Termbox(Color::COLOR_MODE mode, Color bg, std::function<bool(void)> predicate);
 
 	////////////////////////////////////////////////
 	/// \brief Destructor
