@@ -1,8 +1,10 @@
 #ifndef TERMBOX_WIDGETS_UTIL_HPP
 #define TERMBOX_WIDGETS_UTIL_HPP
 
+#define VECTOR_USE_STD
 #include "Vector.hpp"
 #include "Cenum.hpp"
+#include <functional>
 #include <string>
 
 #define ARRAY_LENGTH(__a) (sizeof(__a) / sizeof(__a[0]))
@@ -12,25 +14,54 @@ typedef std::basic_string<Char> String;
 typedef std::basic_string_view<Char> StringView;
 
 template <class T, std::size_t N>
-struct __Vec2iData
-{ }; // This will fail the constraint
+struct __Vec;
 
-template<>
-struct __Vec2iData<int, 2>
+template <class T>
+struct __Vec<T, 2>
 {
-	int x, y;
+	T x, y;
 
-	const int& operator[](std::size_t i) const
+	template <std::size_t i>
+	inline constexpr const T& Get() const noexcept
 	{
-		return *(reinterpret_cast<const int*>(this) + i);
+		if constexpr (i == 0)
+			return x;
+		else if constexpr (i == 1)
+			return y;
+	}
+	template <std::size_t i>
+	inline constexpr T& Get() noexcept
+	{
+		if constexpr (i == 0)
+			return x;
+		else if constexpr (i == 1)
+			return y;
 	}
 
-	int& operator[](std::size_t i)
+	inline constexpr const T& operator[](std::size_t i) const noexcept
 	{
-		return *(reinterpret_cast<int*>(this) + i);
+		switch (i)
+		{
+			case 0:
+				return x;
+			case 1:
+				return y;
+		}
+		__builtin_unreachable();
+	}
+	inline constexpr T& operator[](std::size_t i) noexcept
+	{
+		switch (i)
+		{
+			case 0:
+				return x;
+			case 1:
+				return y;
+		}
+		__builtin_unreachable();
 	}
 };
-typedef Vector<int, 2, __Vec2iData> Vec2i;
+typedef MPVector<std::size_t>::Vector<int, 2, __Vec> Vec2i;
 
 
 ////////////////////////////////////////////////
